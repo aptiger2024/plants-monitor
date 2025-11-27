@@ -1,0 +1,32 @@
+esphome:
+  name: plant-monitor
+  friendly_name: plant-monitor
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "SUHbTs8W+SZPtCWBctB7SO2g0YulamPwcmkueHKq1sk="
+
+ota:
+  - platform: esphome
+    password: "01a0f79deb429e0602e5cd31dd5e0ea9"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Plant-Monitor Fallback Hotspot"
+    password: "CsSwHkPS5oCR"
+
+captive_portal:
+    

@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plant Moisture Monitor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .selector-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .user-selector,
+        .plant-selector {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            min-width: 120px;
+        }
+
+        .user-selector {
+            flex: 0 1 auto;
+            font-weight: 600;
+        }
+
+        .plant-selector {
+            flex: 1 1 auto;
+            min-width: 150px;
+        }
+
+        .user-selector option,
+        .plant-selector option {
+            color: #333;
+        }
+
+        .user-selector:hover,
+        .plant-selector:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .content {
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .plant-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.8;
+                transform: scale(1.05);
+            }
+        }
+
+        .moisture-display {
+            margin: 30px 0;
+        }
+
+        .moisture-number {
+            font-size: 72px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .moisture-label {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .moisture-bar {
+            width: 100%;
+            height: 12px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .moisture-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #ffd93d, #6bcf7f);
+            transition: width 0.5s ease;
+        }
+
+        .thresholds {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #999;
+            margin-top: 10px;
+        }
+
+        .message {
+            background: #f5f5f5;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 25px 0;
+            font-size: 16px;
+            font-style: italic;
+            color: #444;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .status-happy {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-critical {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .info-section {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+        }
+
+        .info-value {
+            color: #999;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .footer {
+            background: #f5f5f5;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .last-update {
+            font-size: 13px;
+            color: #aaa;
+            margin-top: 15px;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 5px rgba(102, 126, 234, 0.2);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+        }
+
+        /* Welcome Modal Styles */
+        .welcome-modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+        }
+
+        .welcome-modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .welcome-content {
+            background-color: white;
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        .welcome-title {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .welcome-subtitle {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .animation-container {
+            width: 150px;
+            height: 150px;
+            margin: 20px auto;
+            position: relative;
+            font-size: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .plant-animation {
+            animation: plantAnimation 8s infinite;
+        }
+
+        @keyframes plantAnimation {
+            0% {
+                transform: translateY(0) scaleY(1);
+                opacity: 1;
+                filter: brightness(1);
+            }
+            25% {
+                transform: translateY(0) scaleY(1);
+                opacity: 1;
+                filter: brightness(1);
+            }
+            50% {
+                transform: translateY(20px) scaleY(0.7) rotateZ(-5deg);
+                opacity: 0.6;
+                filter: brightness(0.7);
+            }
+            65% {
+                transform: translateY(20px) scaleY(0.7) rotateZ(-5deg);
+                opacity: 0.6;
+                filter: brightness(0.7);
+            }
+            75% {
+                transform: translateY(0) scaleY(0.95);
+                opacity: 0.8;
+                filter: brightness(0.9);
+            }
+            100% {
+                transform: translateY(0) scaleY(1);
+                opacity: 1;
+                filter: brightness(1);
+            }
+        }
+
+        .water-drops {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .drop {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #4ecdc4;
+            border-radius: 50%;
+            opacity: 0;
+        }
+
+        .drop.fall {
+            animation: dropFall 0.8s ease-in forwards;
+        }
+
+        @keyframes dropFall {
+            0% {
+                opacity: 1;
+                transform: translateY(-20px) translateX(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(80px) translateX(10px);
+            }
+        }
+
+        .alarm-text {
+            font-size: 24px;
+            margin: 20px 0;
+            animation: blinkAlarm 0.6s infinite;
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+
+        @keyframes blinkAlarm {
+            0%, 50%, 100% {
+                opacity: 1;
+            }
+            25%, 75% {
+                opacity: 0.3;
+            }
+        }
+
+        .welcome-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            margin: 15px 0;
+            box-sizing: border-box;
+        }
+
+        .welcome-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 5px rgba(102, 126, 234, 0.2);
+        }
+
+        .welcome-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        .welcome-buttons button {
+            flex: 1;
+        }
+
+        .welcome-skip {
+            margin-top: 15px;
+        }
+
+        .welcome-skip button {
+            background: transparent;
+            color: #999;
+            text-decoration: underline;
+            padding: 8px;
+        }
+
+        .welcome-skip button:hover {
+            color: #666;
+        }
+
+        .replay-btn {
+            margin-left: 10px;
+            padding: 8px 12px !important;
+            font-size: 12px !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌱 Plant Monitor</h1>
+
+            <div class="selector-group">
+                <select class="user-selector" id="userSelector" onchange="loadUser()">
+                    <option value="sarah">👩 Sarah's Plants</option>
+                    <option value="tom">👨 Tom's Plants</option>
+                    <option value="alex">🧑 Alex's Plants</option>
+                    <option value="jordan">👩‍🤝‍👨 Jordan's Plants</option>
+                </select>
+
+                <select class="plant-selector" id="plantSelector" onchange="loadPlant()">
+                    <option value="plant1">🌿 Plant 1</option>
+                    <option value="plant2">🪴 Plant 2</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- Status Badge -->
+            <div class="status-badge" id="statusBadge">Looking Good!</div>
+
+            <!-- Plant Icon & Moisture -->
+            <div class="plant-icon" id="plantIcon">🌿</div>
+
+            <div class="moisture-display">
+                <div class="moisture-number" id="moisturePercent">65</div>
+                <div class="moisture-label">Moisture Level</div>
+
+                <div class="moisture-bar">
+                    <div class="moisture-fill" id="moistureFill" style="width: 65%"></div>
+                </div>
+
+                <div class="thresholds">
+                    <span>Low: <strong id="lowThreshold">30%</strong></span>
+                    <span>Optimal: <strong id="optimalThreshold">30-70%</strong></span>
+                    <span>High: <strong id="highThreshold">70%</strong></span>
+                </div>
+            </div>
+
+            <!-- Cheeky Message -->
+            <div class="message" id="plantMessage">
+                "I'm absolutely thriving, mate!"
+            </div>
+
+            <!-- Info Section -->
+            <div class="info-section">
+                <div class="info-row">
+                    <span class="info-label">Plant:</span>
+                    <span class="info-value" id="plantName">Monstera</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Location:</span>
+                    <span class="info-value" id="plantLocation">Living Room</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Status:</span>
+                    <span class="info-value" id="plantStatus">Healthy</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Last Reading:</span>
+                    <span class="info-value" id="lastReading">2 min ago</span>
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="buttons">
+                <button class="btn-primary" onclick="openSettings()">⚙️ Settings</button>
+                <button class="btn-secondary" onclick="refreshData()">🔄 Refresh</button>
+                <button class="btn-secondary replay-btn" onclick="playWelcomeAnimation()">📺 Intro</button>
+            </div>
+
+            <div class="last-update" id="lastUpdate">
+                Last sync: just now
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>💚 Keep your plants happy</p>
+        </div>
+    </div>
+
+    <!-- Welcome Modal -->
+    <div id="welcomeModal" class="welcome-modal">
+        <div class="welcome-content">
+            <div class="welcome-title">Welcome! 🌱</div>
+            <div class="welcome-subtitle">Watch what happens to your plant when it needs water...</div>
+
+            <div class="animation-container">
+                <div class="plant-animation" id="welcomePlant">🌿</div>
+                <div class="water-drops" id="waterDrops"></div>
+            </div>
+
+            <div class="alarm-text" id="alarmText" style="display: none;">🚨 NEEDS WATER! 🚨</div>
+
+            <div id="nameInputSection" style="display: none; margin: 20px 0;">
+                <p style="margin-bottom: 10px; color: #666;">What's your name?</p>
+                <input type="text" id="userNameInput" class="welcome-input" placeholder="Enter your name" maxlength="20">
+            </div>
+
+            <div class="welcome-buttons" id="welcomeButtons">
+                <button class="btn-primary" onclick="progressWelcome()">Next →</button>
+                <button class="btn-secondary" onclick="skipWelcome()">Skip</button>
+            </div>
+
+            <div class="welcome-skip" id="continueSection" style="display: none;">
+                <button class="btn-primary" onclick="completeWelcome()">Start Monitoring 💚</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeSettings()">&times;</span>
+            <div class="modal-header">⚙️ Plant Settings</div>
+
+            <div class="form-group">
+                <label>Plant Name</label>
+                <input type="text" id="settingsPlantName" placeholder="e.g., Monstera">
+            </div>
+
+            <div class="form-group">
+                <label>Location</label>
+                <input type="text" id="settingsLocation" placeholder="e.g., Living Room">
+            </div>
+
+            <div class="form-group">
+                <label>Plant Type (for default thresholds)</label>
+                <select id="settingsPlantType">
+                    <option value="tropical">Tropical (40-70%)</option>
+                    <option value="succulent">Succulent (20-40%)</option>
+                    <option value="fern">Fern (50-80%)</option>
+                    <option value="custom">Custom</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Low Moisture Threshold (%)</label>
+                <input type="number" id="settingsLowThreshold" min="10" max="50" value="30">
+            </div>
+
+            <div class="form-group">
+                <label>High Moisture Threshold (%)</label>
+                <input type="number" id="settingsHighThreshold" min="50" max="90" value="70">
+            </div>
+
+            <div class="form-group">
+                <label>Critical Threshold (%) - Send Alert</label>
+                <input type="number" id="settingsCriticalThreshold" min="5" max="30" value="15">
+            </div>
+
+            <div class="modal-buttons">
+                <button class="btn-primary" onclick="saveSettings()">💾 Save</button>
+                <button class="btn-secondary" onclick="closeSettings()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_BASE_URL = 'http://localhost:8000';
+
+        // Device-to-user mapping
+        // In a real app, this would come from the database
+        const deviceUserMap = {
+            'plant-monitor-1': 'sarah',
+            'plant-monitor-2': 'tom',
+            'plant-monitor-3': 'alex',
+            'plant-monitor-4': 'jordan'
+        };
+
+        // Default mock data (fallback if API is down)
+        const users = {
+            sarah: {
+                name: "Sarah",
+                plants: {
+                    plant1: {
+                        name: "Monstera",
+                        location: "Living Room",
+                        icon: "🪴",
+                        moisture: 65,
+                        type: "tropical",
+                        low: 30,
+                        high: 70,
+                        critical: 15
+                    },
+                    plant2: {
+                        name: "Pothos",
+                        location: "Bedroom",
+                        icon: "🍃",
+                        moisture: 42,
+                        type: "tropical",
+                        low: 30,
+                        high: 70,
+                        critical: 15
+                    }
+                }
+            },
+            tom: {
+                name: "Tom",
+                plants: {
+                    plant1: {
+                        name: "Snake Plant",
+                        location: "Kitchen",
+                        icon: "🐍",
+                        moisture: 25,
+                        type: "succulent",
+                        low: 20,
+                        high: 40,
+                        critical: 10
+                    },
+                    plant2: {
+                        name: "Fiddle Leaf Fig",
+                        location: "Home Office",
+                        icon: "🌳",
+                        moisture: 55,
+                        type: "tropical",
+                        low: 30,
+                        high: 70,
+                        critical: 15
+                    }
+                }
+            },
+            alex: {
+                name: "Alex",
+                plants: {
+                    plant1: {
+                        name: "Succulent",
+                        location: "Window Sill",
+                        icon: "🌵",
+                        moisture: 18,
+                        type: "succulent",
+                        low: 20,
+                        high: 40,
+                        critical: 10
+                    },
+                    plant2: {
+                        name: "Peace Lily",
+                        location: "Bathroom",
+                        icon: "🤍",
+                        moisture: 72,
+                        type: "tropical",
+                        low: 50,
+                        high: 80,
+                        critical: 40
+                    }
+                }
+            },
+            jordan: {
+                name: "Jordan",
+                plants: {
+                    plant1: {
+                        name: "Rubber Plant",
+                        location: "Entryway",
+                        icon: "🍂",
+                        moisture: 48,
+                        type: "tropical",
+                        low: 30,
+                        high: 70,
+                        critical: 15
+                    },
+                    plant2: {
+                        name: "Aloe Vera",
+                        location: "Desk",
+                        icon: "💚",
+                        moisture: 22,
+                        type: "succulent",
+                        low: 20,
+                        high: 40,
+                        critical: 10
+                    }
+                }
+            }
+        };
+
+        const messages = {
+            happy: [
+                "Living my best life! 🌿",
+                "Absolutely thriving, mate!",
+                "I'm so moist right now 😎",
+                "Vibes? Immaculate.",
+                "Chef's kiss. Perfect moisture."
+            ],
+            warning: [
+                "Could use a sip, ngl",
+                "Getting a bit parched here...",
+                "Hint hint, nudge nudge 💧",
+                "My leaves are getting dramatic",
+                "Hydration check? 👀"
+            ],
+            critical: [
+                "WATER ME YOU MONSTER 😭",
+                "I'm literally desiccating rn",
+                "SOS: SEVERE MOISTURE DEFICIT",
+                "One last tear before I go... 💀",
+                "I'm becoming a raisin help me",
+                "THIRSTY THIRSTY THIRSTY"
+            ]
+        };
+
+        let currentUser = 'sarah';
+        let currentPlant = 'plant1';
+        let welcomeStage = 0;
+        let apiAvailable = false;
+        let autoRefreshInterval = null;
+
+        // Initialize on page load
+        window.addEventListener('load', async function() {
+            // Check if API is available
+            try {
+                const response = await fetch(API_BASE_URL + '/');
+                apiAvailable = response.ok;
+                console.log('API status:', apiAvailable ? 'Available' : 'Unavailable');
+            } catch (e) {
+                console.log('API is not available, using mock data');
+                apiAvailable = false;
+            }
+
+            // Load saved user or show welcome
+            const savedUser = getCookie('plantMonitorUser');
+            if (savedUser && users[savedUser]) {
+                currentUser = savedUser;
+                updatePlantSelector();
+                loadDataForCurrentUser();
+            } else {
+                openWelcomeModal();
+            }
+
+            // Auto-refresh data every 30 seconds if API is available
+            if (apiAvailable) {
+                autoRefreshInterval = setInterval(loadDataForCurrentUser, 30000);
+            }
+        });
+
+        // Fetch real device data from API
+        async function loadDataForCurrentUser() {
+            if (!apiAvailable) {
+                updateDisplay();
+                return;
+            }
+
+            try {
+                // Get all devices from API
+                const devicesResponse = await fetch(API_BASE_URL + '/devices');
+                const data = await devicesResponse.json();
+
+                if (!data.devices || data.devices.length === 0) {
+                    console.log('No devices in API, using mock data');
+                    updateDisplay();
+                    return;
+                }
+
+                // Update user data with real values
+                for (const device of data.devices) {
+                    const userKey = Object.keys(deviceUserMap).find(
+                        key => deviceUserMap[key] === currentUser
+                    );
+
+                    if (device.device_id === userKey && users[currentUser]) {
+                        if (device.plant_1) {
+                            users[currentUser].plants.plant1.moisture = device.plant_1.moisture;
+                            users[currentUser].plants.plant1.name = device.plant_1.name || users[currentUser].plants.plant1.name;
+                            users[currentUser].plants.plant1.location = device.plant_1.location || users[currentUser].plants.plant1.location;
+                        }
+                        if (device.plant_2) {
+                            users[currentUser].plants.plant2.moisture = device.plant_2.moisture;
+                            users[currentUser].plants.plant2.name = device.plant_2.name || users[currentUser].plants.plant2.name;
+                            users[currentUser].plants.plant2.location = device.plant_2.location || users[currentUser].plants.plant2.location;
+                        }
+                    }
+                }
+
+                updateDisplay();
+            } catch (e) {
+                console.error('Failed to load data from API:', e);
+                // Fallback to mock data
+                updateDisplay();
+            }
+        }
+
+        // Cookie functions
+        function setCookie(name, value, days = 365) {
+            const d = new Date();
+            d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+            const expires = "expires=" + d.toUTCString();
+            document.cookie = name + "=" + value + ";" + expires + ";path=/";
+        }
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i].trim();
+                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length);
+            }
+            return null;
+        }
+
+        function deleteCookie(name) {
+            document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        }
+
+        function loadUser() {
+            const selected = document.getElementById('userSelector').value;
+            currentUser = selected;
+            currentPlant = 'plant1';
+
+            // Save user preference
+            setCookie('plantMonitorUser', selected);
+
+            // Update plant selector to show user's plants
+            updatePlantSelector();
+
+            // Load fresh data (from API if available)
+            loadDataForCurrentUser();
+        }
+
+        function updatePlantSelector() {
+            const user = users[currentUser];
+            const plantSelector = document.getElementById('plantSelector');
+
+            // Clear existing options
+            plantSelector.innerHTML = '';
+
+            // Add user's plants as options
+            Object.keys(user.plants).forEach((plantKey, index) => {
+                const plant = user.plants[plantKey];
+                const option = document.createElement('option');
+                option.value = plantKey;
+                option.textContent = `${plant.icon} ${plant.name}`;
+                plantSelector.appendChild(option);
+            });
+
+            plantSelector.value = 'plant1';
+        }
+
+        function loadPlant() {
+            const selected = document.getElementById('plantSelector').value;
+            currentPlant = selected;
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            const plant = users[currentUser].plants[currentPlant];
+            const moisture = plant.moisture;
+
+            // Update main display
+            document.getElementById('plantIcon').textContent = plant.icon;
+            document.getElementById('moisturePercent').textContent = moisture;
+            document.getElementById('moistureFill').style.width = moisture + '%';
+            document.getElementById('plantName').textContent = plant.name;
+            document.getElementById('plantLocation').textContent = plant.location;
+
+            // Update thresholds
+            document.getElementById('lowThreshold').textContent = plant.low + '%';
+            document.getElementById('highThreshold').textContent = plant.high + '%';
+
+            // Determine status
+            let status, statusClass, messageArray;
+            if (moisture < plant.critical) {
+                status = '🚨 Critical';
+                statusClass = 'status-critical';
+                messageArray = messages.critical;
+                document.getElementById('plantStatus').textContent = 'Dying';
+            } else if (moisture < plant.low) {
+                status = '⚠️ Dry';
+                statusClass = 'status-warning';
+                messageArray = messages.warning;
+                document.getElementById('plantStatus').textContent = 'Thirsty';
+            } else if (moisture > plant.high) {
+                status = '⚠️ Wet';
+                statusClass = 'status-warning';
+                messageArray = messages.warning;
+                document.getElementById('plantStatus').textContent = 'Overwatered';
+            } else {
+                status = '✅ Healthy';
+                statusClass = 'status-happy';
+                messageArray = messages.happy;
+                document.getElementById('plantStatus').textContent = 'Happy';
+            }
+
+            // Update status badge
+            const badge = document.getElementById('statusBadge');
+            badge.textContent = status;
+            badge.className = 'status-badge ' + statusClass;
+
+            // Update message
+            const randomMessage = messageArray[Math.floor(Math.random() * messageArray.length)];
+            document.getElementById('plantMessage').textContent = '"' + randomMessage + '"';
+
+            // Update timestamp
+            const now = new Date();
+            document.getElementById('lastReading').textContent = 'just now';
+            document.getElementById('lastUpdate').textContent = 'Last sync: ' + now.toLocaleTimeString();
+        }
+
+        function openSettings() {
+            const plant = users[currentUser].plants[currentPlant];
+            document.getElementById('settingsPlantName').value = plant.name;
+            document.getElementById('settingsLocation').value = plant.location;
+            document.getElementById('settingsPlantType').value = plant.type;
+            document.getElementById('settingsLowThreshold').value = plant.low;
+            document.getElementById('settingsHighThreshold').value = plant.high;
+            document.getElementById('settingsCriticalThreshold').value = plant.critical;
+            document.getElementById('settingsModal').classList.add('show');
+        }
+
+        function closeSettings() {
+            document.getElementById('settingsModal').classList.remove('show');
+        }
+
+        function saveSettings() {
+            const plant = users[currentUser].plants[currentPlant];
+            plant.name = document.getElementById('settingsPlantName').value;
+            plant.location = document.getElementById('settingsLocation').value;
+            plant.type = document.getElementById('settingsPlantType').value;
+            plant.low = parseInt(document.getElementById('settingsLowThreshold').value);
+            plant.high = parseInt(document.getElementById('settingsHighThreshold').value);
+            plant.critical = parseInt(document.getElementById('settingsCriticalThreshold').value);
+
+            closeSettings();
+            updateDisplay();
+            alert('Settings saved! 💾');
+        }
+
+        function refreshData() {
+            // Simulate new data
+            users[currentUser].plants[currentPlant].moisture = Math.floor(Math.random() * 100);
+            updateDisplay();
+            alert('Data refreshed!');
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const settingsModal = document.getElementById('settingsModal');
+            const welcomeModal = document.getElementById('welcomeModal');
+            if (event.target == settingsModal) {
+                settingsModal.classList.remove('show');
+            }
+            if (event.target == welcomeModal) {
+                // Don't close welcome by clicking outside
+            }
+        }
+
+        // Welcome Animation Functions
+        function openWelcomeModal() {
+            document.getElementById('welcomeModal').classList.add('show');
+            welcomeStage = 0;
+            playWelcomeAnimation();
+        }
+
+        function playWelcomeAnimation() {
+            welcomeStage = 0;
+            document.getElementById('nameInputSection').style.display = 'none';
+            document.getElementById('welcomeButtons').style.display = 'flex';
+            document.getElementById('continueSection').style.display = 'none';
+            document.getElementById('alarmText').style.display = 'none';
+            document.getElementById('waterDrops').innerHTML = '';
+
+            // Animate plant drooping and watering
+            const plant = document.getElementById('welcomePlant');
+            plant.style.animation = 'plantAnimation 8s';
+
+            // Show alarm at 50% (4s)
+            setTimeout(() => {
+                document.getElementById('alarmText').style.display = 'block';
+                playAlarmSound();
+            }, 4000);
+
+            // Spawn water drops at 65% (5.2s)
+            setTimeout(() => {
+                document.getElementById('alarmText').style.display = 'none';
+                spawnWaterDrops();
+            }, 5200);
+        }
+
+        function spawnWaterDrops() {
+            const container = document.getElementById('waterDrops');
+            for (let i = 0; i < 8; i++) {
+                setTimeout(() => {
+                    const drop = document.createElement('div');
+                    drop.className = 'drop fall';
+                    drop.style.left = (20 + Math.random() * 60) + '%';
+                    drop.style.top = '-20px';
+                    container.appendChild(drop);
+                    setTimeout(() => drop.remove(), 800);
+                }, i * 100);
+            }
+        }
+
+        function playAlarmSound() {
+            // Create a simple beep using Web Audio API
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            // Plant alarm: descending frequency
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.3);
+
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.3);
+        }
+
+        function progressWelcome() {
+            if (welcomeStage === 0) {
+                welcomeStage = 1;
+                document.getElementById('welcomeButtons').style.display = 'none';
+                document.getElementById('nameInputSection').style.display = 'block';
+                document.getElementById('continueSection').style.display = 'block';
+            }
+        }
+
+        function skipWelcome() {
+            completeWelcome();
+        }
+
+        function completeWelcome() {
+            const userName = document.getElementById('userNameInput').value.trim();
+
+            if (userName) {
+                setCookie('userName', userName);
+                // Set the user selector to the saved name or just show they've personalized
+                document.getElementById('userNameInput').value = '';
+            }
+
+            document.getElementById('welcomeModal').classList.remove('show');
+            welcomeStage = 0;
+        }
+
+        // Initialize
+        updatePlantSelector();
+        updateDisplay();
+
+        // Check if first time visitor
+        const hasVisited = getCookie('hasVisited');
+        if (!hasVisited) {
+            setCookie('hasVisited', 'true');
+            openWelcomeModal();
+        } else {
+            // Load previously saved user name if exists
+            const savedName = getCookie('userName');
+            if (savedName) {
+                // You could use this to personalize greetings later
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+.git
+.gitignore
+.dockerignore
+.env.local
+*.pyc
+__pycache__
+.pytest_cache
+.venv
+venv
+env
+node_modules
+.DS_Store
+*.log
+plants.db
+.esphome
+backend.log

@@ -1,0 +1,54 @@
+esphome:
+  name: plant-monitor
+  friendly_name: plant-monitor
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+    version: recommended
+
+# Enable logging
+logger:
+  level: INFO
+
+# Disable API for now - this sometimes causes issues
+# api:
+
+ota:
+  - platform: esphome
+    password: "27b87c2c9de41b858c0ad84ad13984f5"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: true
+  ap:
+    ssid: "Plant-Monitor Fallback"
+    password: "ND9kIKauNGyJ"
+
+captive_portal:
+
+# Analog sensors for moisture (MINIMAL - no filters, no OLED yet)
+sensor:
+  # Moisture Sensor 1 (GPIO34)
+  - platform: adc
+    pin: GPIO34
+    name: "Plant 1 Moisture"
+    id: moisture_1
+    attenuation: auto
+    update_interval: 60s
+
+  # Moisture Sensor 2 (GPIO35)
+  - platform: adc
+    pin: GPIO35
+    name: "Plant 2 Moisture"
+    id: moisture_2
+    attenuation: auto
+    update_interval: 60s
+
+  # WiFi signal
+  - platform: wifi_signal
+    name: "WiFi Signal"
+    update_interval: 60s
+    

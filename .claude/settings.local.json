@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__crawlbase__crawl_markdown",
+      "WebSearch",
+      "Bash(python -m esphome:*)",
+      "Bash(curl:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
