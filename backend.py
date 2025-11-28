@@ -3,7 +3,7 @@ Plant Moisture Monitor - FastAPI Backend
 Receives sensor data from ESP-32 devices and stores in SQLite database
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime
 from sqlalchemy.ext.declarative import declarative_base
@@ -11,7 +11,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from pydantic import BaseModel
 from datetime import datetime
 import os
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 
 # Database setup
 DATABASE_URL = "sqlite:///./plants.db"
@@ -148,8 +148,8 @@ async def root():
     }
 
 
-@app.post("/reading")
-async def receive_reading(request: SensorReadingRequest):
+@app.post("/reading", response_model=Dict[str, Any])
+async def receive_reading(request: SensorReadingRequest, db: Session = Depends(get_db)):
     """
     Receive moisture sensor readings from ESP-32 device
 
@@ -164,7 +164,6 @@ async def receive_reading(request: SensorReadingRequest):
         "location": "Living Room"
     }
     """
-    db = SessionLocal()
     try:
         # Store plant 1 reading
         reading_1 = MoistureSensor(
@@ -213,67 +212,61 @@ async def receive_reading(request: SensorReadingRequest):
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        db.close()
 
 
-@app.get("/device/{device_id}")
-async def get_device_status(device_id: str):
+@app.get("/device/{device_id}", response_model=Dict[str, Any])
+async def get_device_status(device_id: str, db: Session = Depends(get_db)):
     """
     Get latest sensor readings for a device
 
     Returns both plants' current moisture levels and status
     """
-    db = SessionLocal()
-    try:
-        # Get latest readings for both plants
-        plant_1 = db.query(MoistureSensor).filter(
-            MoistureSensor.device_id == device_id,
-            MoistureSensor.plant_number == 1
-        ).order_by(MoistureSensor.timestamp.desc()).first()
+    # Get latest readings for both plants
+    plant_1 = db.query(MoistureSensor).filter(
+        MoistureSensor.device_id == device_id,
+        MoistureSensor.plant_number == 1
+    ).order_by(MoistureSensor.timestamp.desc()).first()
 
-        plant_2 = db.query(MoistureSensor).filter(
-            MoistureSensor.device_id == device_id,
-            MoistureSensor.plant_number == 2
-        ).order_by(MoistureSensor.timestamp.desc()).first()
+    plant_2 = db.query(MoistureSensor).filter(
+        MoistureSensor.device_id == device_id,
+        MoistureSensor.plant_number == 2
+    ).order_by(MoistureSensor.timestamp.desc()).first()
 
-        device = db.query(DeviceInfo).filter(
-            DeviceInfo.device_id == device_id
-        ).first()
+    device = db.query(DeviceInfo).filter(
+        DeviceInfo.device_id == device_id
+    ).first()
 
-        if not plant_1 or not plant_2:
-            raise HTTPException(status_code=404, detail="No readings found for device")
+    if not plant_1 or not plant_2:
+        raise HTTPException(status_code=404, detail="No readings found for device")
 
-        return {
-            "device_id": device_id,
-            "friendly_name": device.friendly_name if device else device_id,
-            "is_active": device.is_active == 1 if device else True,
-            "last_seen": device.last_seen.isoformat() if device else None,
-            "plant_1": {
-                "plant_number": 1,
-                "name": plant_1.plant_name,
-                "location": plant_1.location,
-                "user_name": plant_1.user_name,
-                "current_moisture": plant_1.moisture_percent,
-                "status": get_moisture_status(plant_1.moisture_percent),
-                "last_reading": plant_1.timestamp.isoformat()
-            },
-            "plant_2": {
-                "plant_number": 2,
-                "name": plant_2.plant_name,
-                "location": plant_2.location,
-                "user_name": plant_2.user_name,
-                "current_moisture": plant_2.moisture_percent,
-                "status": get_moisture_status(plant_2.moisture_percent),
-                "last_reading": plant_2.timestamp.isoformat()
-            }
+    return {
+        "device_id": device_id,
+        "friendly_name": device.friendly_name if device else device_id,
+        "is_active": device.is_active == 1 if device else True,
+        "last_seen": device.last_seen.isoformat() if device else None,
+        "plant_1": {
+            "plant_number": 1,
+            "name": plant_1.plant_name,
+            "location": plant_1.location,
+            "user_name": plant_1.user_name,
+            "current_moisture": plant_1.moisture_percent,
+            "status": get_moisture_status(plant_1.moisture_percent),
+            "last_reading": plant_1.timestamp.isoformat()
+        },
+        "plant_2": {
+            "plant_number": 2,
+            "name": plant_2.plant_name,
+            "location": plant_2.location,
+            "user_name": plant_2.user_name,
+            "current_moisture": plant_2.moisture_percent,
+            "status": get_moisture_status(plant_2.moisture_percent),
+            "last_reading": plant_2.timestamp.isoformat()
         }
-    finally:
-        db.close()
+    }
 
 
-@app.get("/device/{device_id}/plant/{plant_number}/history")
-async def get_plant_history(device_id: str, plant_number: int, limit: int = 100):
+@app.get("/device/{device_id}/plant/{plant_number}/history", response_model=Dict[str, Any])
+async def get_plant_history(device_id: str, plant_number: int, limit: int = 100, db: Session = Depends(get_db)):
     """
     Get historical moisture readings for a specific plant
 
@@ -282,76 +275,68 @@ async def get_plant_history(device_id: str, plant_number: int, limit: int = 100)
         plant_number: 1 or 2
         limit: Maximum number of readings to return (default 100)
     """
-    db = SessionLocal()
-    try:
-        if plant_number not in [1, 2]:
-            raise HTTPException(status_code=400, detail="plant_number must be 1 or 2")
+    if plant_number not in [1, 2]:
+        raise HTTPException(status_code=400, detail="plant_number must be 1 or 2")
 
-        readings = db.query(MoistureSensor).filter(
-            MoistureSensor.device_id == device_id,
-            MoistureSensor.plant_number == plant_number
-        ).order_by(MoistureSensor.timestamp.desc()).limit(limit).all()
+    readings = db.query(MoistureSensor).filter(
+        MoistureSensor.device_id == device_id,
+        MoistureSensor.plant_number == plant_number
+    ).order_by(MoistureSensor.timestamp.desc()).limit(limit).all()
 
-        if not readings:
-            raise HTTPException(status_code=404, detail="No readings found")
+    if not readings:
+        raise HTTPException(status_code=404, detail="No readings found")
 
-        return {
-            "device_id": device_id,
-            "plant_number": plant_number,
-            "plant_name": readings[0].plant_name,
-            "readings": [
-                {
-                    "moisture_percent": r.moisture_percent,
-                    "status": get_moisture_status(r.moisture_percent),
-                    "timestamp": r.timestamp.isoformat()
-                }
-                for r in reversed(readings)  # Reverse to oldest first
-            ]
-        }
-    finally:
-        db.close()
+    return {
+        "device_id": device_id,
+        "plant_number": plant_number,
+        "plant_name": readings[0].plant_name,
+        "readings": [
+            {
+                "moisture_percent": r.moisture_percent,
+                "status": get_moisture_status(r.moisture_percent),
+                "timestamp": r.timestamp.isoformat()
+            }
+            for r in reversed(readings)  # Reverse to oldest first
+        ]
+    }
 
 
-@app.get("/devices")
-async def list_devices():
+@app.get("/devices", response_model=Dict[str, Any])
+async def list_devices(db: Session = Depends(get_db)):
     """Get all registered devices and their latest status"""
-    db = SessionLocal()
-    try:
-        devices = db.query(DeviceInfo).all()
+    devices = db.query(DeviceInfo).all()
 
-        result = []
-        for device in devices:
-            plant_1 = db.query(MoistureSensor).filter(
-                MoistureSensor.device_id == device.device_id,
-                MoistureSensor.plant_number == 1
-            ).order_by(MoistureSensor.timestamp.desc()).first()
+    result = []
+    for device in devices:
+        plant_1 = db.query(MoistureSensor).filter(
+            MoistureSensor.device_id == device.device_id,
+            MoistureSensor.plant_number == 1
+        ).order_by(MoistureSensor.timestamp.desc()).first()
 
-            plant_2 = db.query(MoistureSensor).filter(
-                MoistureSensor.device_id == device.device_id,
-                MoistureSensor.plant_number == 2
-            ).order_by(MoistureSensor.timestamp.desc()).first()
+        plant_2 = db.query(MoistureSensor).filter(
+            MoistureSensor.device_id == device.device_id,
+            MoistureSensor.plant_number == 2
+        ).order_by(MoistureSensor.timestamp.desc()).first()
 
-            result.append({
-                "device_id": device.device_id,
-                "friendly_name": device.friendly_name,
-                "owner_name": device.owner_name,
-                "is_active": device.is_active == 1,
-                "last_seen": device.last_seen.isoformat(),
-                "plant_1": {
-                    "moisture": plant_1.moisture_percent if plant_1 else None,
-                    "status": get_moisture_status(plant_1.moisture_percent) if plant_1 else None,
-                    "name": plant_1.plant_name if plant_1 else None
-                } if plant_1 else None,
-                "plant_2": {
-                    "moisture": plant_2.moisture_percent if plant_2 else None,
-                    "status": get_moisture_status(plant_2.moisture_percent) if plant_2 else None,
-                    "name": plant_2.plant_name if plant_2 else None
-                } if plant_2 else None,
-            })
+        result.append({
+            "device_id": device.device_id,
+            "friendly_name": device.friendly_name,
+            "owner_name": device.owner_name,
+            "is_active": device.is_active == 1,
+            "last_seen": device.last_seen.isoformat(),
+            "plant_1": {
+                "moisture": plant_1.moisture_percent if plant_1 else None,
+                "status": get_moisture_status(plant_1.moisture_percent) if plant_1 else None,
+                "name": plant_1.plant_name if plant_1 else None
+            } if plant_1 else None,
+            "plant_2": {
+                "moisture": plant_2.moisture_percent if plant_2 else None,
+                "status": get_moisture_status(plant_2.moisture_percent) if plant_2 else None,
+                "name": plant_2.plant_name if plant_2 else None
+            } if plant_2 else None,
+        })
 
-        return {"devices": result}
-    finally:
-        db.close()
+    return {"devices": result}
 
 
 # ============================================================================
