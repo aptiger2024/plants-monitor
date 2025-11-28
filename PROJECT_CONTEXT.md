@@ -248,5 +248,5 @@ pip install --upgrade esphome
 
 ---
 
-**Last Updated:** 2025-11-26
-**Status:** ESP-32 working, FastAPI backend running, API endpoints tested
+**Last Updated:** 2025-11-28
+**Status:** FastAPI backend LIVE on srv-media-2:7000, Docker deployed to Portainer, ready for production setup
