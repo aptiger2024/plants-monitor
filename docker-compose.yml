@@ -1,10 +1,9 @@
 version: '3.8'
 
 services:
-  # FastAPI Backend
   plants-api:
     build:
-      context: .
+      context: https://github.com/aptiger2024/plants-monitor.git
       dockerfile: Dockerfile.api
     container_name: plants-api
     restart: unless-stopped
