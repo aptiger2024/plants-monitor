@@ -41,28 +41,45 @@ Building custom **plant moisture monitors** as gifts for friends. Each device mo
    - API ready for integration
    - Critical alerts (<20% moisture)
 
-### ✅ Recent Fixes (Session 3)
+### ✅ Recent Fixes (Session 3-4)
 - **Firmware Flash Issue RESOLVED** ✅
   - Root cause: Web flasher was missing bootloader + partition table
   - Solution: Used esptool to flash bootloader, partition table, and firmware together
   - ESP-32 now boots successfully and connects to WiFi
   - Switched framework from Arduino to esp-idf for stability
 
-- **FastAPI Backend Created** ✅
+- **FastAPI Backend Created & Deployed** ✅
   - Full REST API for receiving and retrieving sensor data
   - SQLite database for persistent storage
   - Endpoints for: readings, device status, historical data, device list
   - CORS enabled for web dashboard integration
   - API docs at http://localhost:8000/docs
+  - Running on srv-media-2:7000 via Portainer
+  - Database uses persistent Docker volume
+
+- **Type Annotation Bugs Fixed** ✅ (Session 4)
+  - Fixed FastAPI response model validation errors
+  - All endpoints now use proper dependency injection with `Depends(get_db)`
+  - Added explicit `response_model=Dict[str, Any]` to all endpoints
+  - Changes pushed to GitHub, ready for Portainer rebuild
+
+- **Comprehensive Documentation Created** ✅ (Session 4)
+  - DEVICE_SETUP_GUIDE.md - For gift recipients (non-technical)
+  - BUILDER_DEVICE_CONFIG_GUIDE.md - Complete device build & config guide
+  - QUICK_START_YOUR_NEXT_DEVICE.md - Checklist for building devices #2-5
+  - DEVICE_REGISTRATION_EXPLAINED.md - How registration and data flow works
+  - DOCUMENTATION_INDEX.md - Master navigation index
+  - NEXT_STEPS_FOR_YOU.md - Immediate action items
 
 ### 🔄 In Progress
-- Connecting web dashboard to real API endpoints
+- Waiting for capacitive soil moisture sensors to arrive
+- Charger board arrived (micro USB) - found USB-C alternative: https://www.amazon.ca/Charging-Lithium-Battery-Protection-Discharge/dp/B0D7Z92K51/ ✅
 
 ### ⏳ Not Started
+- Soldering sensors to first ESP-32 device (waiting on sensors)
 - N8N Telegram bot workflow
-- OTA updates testing
 - Making all 3-5 devices
-- OLED display integration (temporarily removed for firmware stability)
+- OLED display integration (currently disabled for stability)
 
 ---
 
@@ -227,26 +244,51 @@ pip install --upgrade esphome
 
 1. ✅ Design cute, simple web dashboard
 2. ✅ Write dual-sensor firmware
-3. ⏳ Flash firmware to ESP-32
-4. ⏳ Build backend API
-5. ⏳ Connect dashboard to real data
-6. ⏳ Set up Telegram alerts
-7. ⏳ Build 3-5 physical devices
-8. ⏳ Gift to friends!
+3. ✅ Flash firmware to ESP-32 (boots successfully, connects to WiFi)
+4. ✅ Build backend API (FastAPI with SQLite, running on srv-media-2:7000)
+5. ✅ Connect dashboard to real API (updated to use https://plants.suplexcentral.com/api)
+6. ⏳ Set up Telegram alerts (N8N integration - next step)
+7. ⏳ Build 3-5 physical devices (waiting on sensors, then can build with full instructions)
+8. ⏳ Gift to friends! (comprehensive setup guides ready)
 
 ---
 
 ## Notes for Next Session
 
-- You have **2 ESP-32 boards** already
-- Still need to **order extra capacitive sensors** (6-10 total for 3-5 devices)
-- Firmware config is ready to go - just needs to compile and flash
-- Dashboard HTML is complete and ready for API integration
-- All pin assignments are documented and tested in config
+**Hardware Status:**
+- You have **2 ESP-32 boards** already ✅
+- Charger board: micro USB version arrived (ordering USB-C alternative)
+- **Waiting on:** capacitive soil moisture sensors (6-10 for 3-5 devices)
 
-**Current Focus:** Get first ESP-32 running with dual sensors and OLED display working locally before building out the full backend.
+**Software Status:**
+- Backend API: **Running on srv-media-2:7000** ✅
+- Dashboard: **Ready at plants.suplexcentral.com** ✅
+- Database: **Persistent SQLite volume** ✅
+- Device registration: **Automatic on first POST** ✅
+- Type annotations: **Fixed** ✅
+
+**Documentation Ready:**
+- DEVICE_SETUP_GUIDE.md - For gift recipients
+- BUILDER_DEVICE_CONFIG_GUIDE.md - For building devices
+- QUICK_START_YOUR_NEXT_DEVICE.md - Checklist template
+- DEVICE_REGISTRATION_EXPLAINED.md - How it works
+- NEXT_STEPS_FOR_YOU.md - Your action items
+- See DOCUMENTATION_INDEX.md for full list
+
+**When Sensors Arrive:**
+1. Create per-device firmware configs (plant-monitor-1.yaml, plant-monitor-2.yaml, etc.)
+2. Solder sensors to GPIO34/GPIO35
+3. Test with real data
+4. Prepare recipient setup cards
+5. Gift devices!
 
 ---
 
-**Last Updated:** 2025-11-28
-**Status:** FastAPI backend LIVE on srv-media-2:7000, Docker deployed to Portainer, ready for production setup
+**Last Updated:** 2025-11-28 (Session 4)
+**Status:**
+- ✅ Production API running and tested
+- ✅ Dashboard fully configured
+- ✅ Device registration system ready
+- ✅ Complete documentation created
+- ⏳ Waiting on sensors for first real device build
+- 🎯 Next: Build device #1 when sensors arrive, then replicate for devices #2-5
