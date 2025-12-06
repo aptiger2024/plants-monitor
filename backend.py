@@ -5,12 +5,15 @@ Receives sensor data from ESP-32 devices and stores in SQLite database
 
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from pydantic import BaseModel
 from datetime import datetime
 import os
+from pathlib import Path
 from typing import Optional, List, Dict, Any
 
 # Database setup
@@ -140,6 +143,20 @@ def get_moisture_status(moisture_percent: float) -> str:
 
 @app.get("/")
 async def root():
+    """Serve the dashboard HTML"""
+    dashboard_path = Path(__file__).parent / "dashboard.html"
+    if dashboard_path.exists():
+        return FileResponse(dashboard_path, media_type="text/html")
+    else:
+        # Fallback if dashboard.html not found
+        return {
+            "status": "running",
+            "api": "Plant Moisture Monitor",
+            "version": "1.0"
+        }
+
+@app.get("/health")
+async def health():
     """Health check endpoint"""
     return {
         "status": "running",
