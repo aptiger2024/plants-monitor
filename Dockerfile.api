@@ -13,8 +13,9 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application
+# Copy application files
 COPY backend.py .
+COPY dashboard.html .
 
 # Create data directory for database
 RUN mkdir -p /app/data
