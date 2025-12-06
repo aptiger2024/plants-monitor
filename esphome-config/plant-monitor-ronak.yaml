@@ -15,6 +15,9 @@ logger:
 # Disable API for now - this sometimes causes issues
 # api:
 
+# Enable automation component
+automation:
+
 ota:
   - platform: esphome
     password: "27b87c2c9de41b858c0ad84ad13984f5"
@@ -54,13 +57,12 @@ sensor:
 
 # HTTP client for sending data to API
 http_request:
+  timeout: 10s
 
-# Automation to send readings every 10 minutes
-automation:
-  - trigger:
-      platform: interval
-      interval: 10min
-    action:
+# Add automation to send readings every 10 minutes
+script:
+  - id: send_plant_data
+    then:
       - http_request.post:
           url: http://192.168.140.94:7000/api/reading
           headers:
@@ -73,3 +75,10 @@ automation:
             plant_2_name: "Plant 2"
             user_name: "Ronak"
             location: "Home"
+
+automation:
+  - trigger:
+      platform: interval
+      interval: 10min
+    action:
+      - script.execute: send_plant_data

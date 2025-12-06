@@ -1,0 +1,32 @@
+esphome:
+  name: laurie
+  friendly_name: laurie
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "QwghwqHG9j1YI4570cv42NHwbe09uleILQhwjUH86yM="
+
+ota:
+  - platform: esphome
+    password: "75373126e70e3846068dd99da1d6eaf1"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Laurie Fallback Hotspot"
+    password: "O5Oxshk76Uk2"
+
+captive_portal:
+    
