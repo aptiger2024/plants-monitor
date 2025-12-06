@@ -12,11 +12,8 @@ esp32:
 logger:
   level: INFO
 
-# Disable API for now - this sometimes causes issues
+# Disable API for now
 # api:
-
-# Enable automation component
-automation:
 
 ota:
   - platform: esphome
@@ -32,7 +29,7 @@ wifi:
 
 captive_portal:
 
-# Analog sensors for moisture (MINIMAL - no filters, no OLED yet)
+# Analog sensors for moisture
 sensor:
   # Moisture Sensor 1 (GPIO34)
   - platform: adc
@@ -54,31 +51,3 @@ sensor:
   - platform: wifi_signal
     name: "WiFi Signal"
     update_interval: 60s
-
-# HTTP client for sending data to API
-http_request:
-  timeout: 10s
-
-# Add automation to send readings every 10 minutes
-script:
-  - id: send_plant_data
-    then:
-      - http_request.post:
-          url: http://192.168.140.94:7000/api/reading
-          headers:
-            Content-Type: application/json
-          json:
-            device_id: "plant-monitor-laurie"
-            plant_1_moisture: !lambda 'return id(moisture_1).state;'
-            plant_2_moisture: !lambda 'return id(moisture_2).state;'
-            plant_1_name: "Plant 1"
-            plant_2_name: "Plant 2"
-            user_name: "Laurie"
-            location: "Home"
-
-automation:
-  - trigger:
-      platform: interval
-      interval: 10min
-    action:
-      - script.execute: send_plant_data
