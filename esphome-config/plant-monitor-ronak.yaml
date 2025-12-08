@@ -26,6 +26,8 @@ wifi:
   ap:
     ssid: "Plant-Monitor Ronak"
     password: "flowers123"
+  # WiFi credentials are automatically saved to flash after successful connection
+  # and will be restored after power cycle or reset
 
 captive_portal:
 
