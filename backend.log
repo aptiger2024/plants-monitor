@@ -16,3 +16,5 @@ INFO:     127.0.0.1:62073 - "GET /device/plant-monitor-1 HTTP/1.1" 200 OK
 INFO:     127.0.0.1:62759 - "GET /devices HTTP/1.1" 200 OK
 INFO:     127.0.0.1:62762 - "GET /devices HTTP/1.1" 200 OK
 INFO:     127.0.0.1:61003 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62819 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62819 - "GET /favicon.ico HTTP/1.1" 404 Not Found

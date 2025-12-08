@@ -318,6 +318,65 @@ async def get_plant_history(device_id: str, plant_number: int, limit: int = 100,
     }
 
 
+@app.post("/api/setup", response_model=Dict[str, Any])
+async def setup_device(request: SensorReadingRequest, db: Session = Depends(get_db)):
+    """
+    Setup endpoint for device to register itself (called from setup form on device hotspot)
+    Same as /api/provision but designed for local network calls
+    """
+    return await provision_device(request, db)
+
+
+@app.post("/api/provision", response_model=Dict[str, Any])
+async def provision_device(request: SensorReadingRequest, db: Session = Depends(get_db)):
+    """
+    Provision a new device: store configuration and prepare for WiFi connection
+
+    Expected JSON from device:
+    {
+        "device_id": "plant-monitor-laurie",
+        "plant_1_name": "Monstera",
+        "plant_2_name": "Pothos",
+        "user_name": "Laurie",
+        "location": "Living Room"
+    }
+
+    Returns instructions for device to connect to WiFi
+    """
+    try:
+        # Check if device already exists
+        device = db.query(DeviceInfo).filter(
+            DeviceInfo.device_id == request.device_id
+        ).first()
+
+        if not device:
+            device = DeviceInfo(
+                device_id=request.device_id,
+                friendly_name=request.device_id,
+                owner_name=request.user_name or "Unknown",
+            )
+            db.add(device)
+        else:
+            # Update existing device
+            device.owner_name = request.user_name or device.owner_name
+
+        db.commit()
+
+        return {
+            "status": "provisioned",
+            "device_id": request.device_id,
+            "message": "Device registered successfully. You can now disconnect from the setup hotspot.",
+            "owner_name": request.user_name,
+            "plants": {
+                "plant_1": request.plant_1_name,
+                "plant_2": request.plant_2_name
+            }
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/devices", response_model=Dict[str, Any])
 async def list_devices(db: Session = Depends(get_db)):
     """Get all registered devices and their latest status"""

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plant Monitor Setup</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            background-color: #f5f5ff;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        .status {
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 8px;
+            text-align: center;
+            display: none;
+            font-weight: 600;
+        }
+
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .status.loading {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            display: block;
+        }
+
+        .instructions {
+            background-color: #f0f4ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border-left: 4px solid #667eea;
+        }
+
+        .instructions h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .instructions ol {
+            margin-left: 20px;
+            font-size: 13px;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+        }
+
+        .device-id {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 12px;
+            text-align: center;
+            margin-top: 15px;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌱 Plant Monitor</h1>
+            <p>Setup Your Device</p>
+        </div>
+
+        <div class="content">
+            <div class="instructions">
+                <h3>📋 Instructions</h3>
+                <ol>
+                    <li>Fill in your information below</li>
+                    <li>Give your plants names (optional)</li>
+                    <li>Click "Complete Setup"</li>
+                    <li>Device will connect to your WiFi automatically</li>
+                </ol>
+            </div>
+
+            <form id="setupForm">
+                <div class="form-group">
+                    <label for="ownerName">Your Name *</label>
+                    <input type="text" id="ownerName" name="user_name" placeholder="e.g., Laurie" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="deviceName">Device Name</label>
+                    <input type="text" id="deviceName" name="device_name" placeholder="e.g., Living Room Monitor">
+                </div>
+
+                <div class="form-group">
+                    <label for="plant1Name">Plant 1 Name</label>
+                    <input type="text" id="plant1Name" name="plant_1_name" placeholder="e.g., Monstera">
+                </div>
+
+                <div class="form-group">
+                    <label for="plant2Name">Plant 2 Name</label>
+                    <input type="text" id="plant2Name" name="plant_2_name" placeholder="e.g., Pothos">
+                </div>
+
+                <div class="form-group">
+                    <label for="location">Location</label>
+                    <input type="text" id="location" name="location" placeholder="e.g., Living Room">
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="btn-submit">Complete Setup</button>
+                </div>
+
+                <div id="status" class="status"></div>
+
+                <div class="device-id" id="deviceId"></div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Get device ID from URL parameter or API
+        let deviceId = null;
+
+        // Try to get device ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        deviceId = urlParams.get('device_id');
+
+        // If not in URL, try to fetch from API
+        if (!deviceId) {
+            fetch('/api/device-info')
+                .then(r => r.json())
+                .then(data => {
+                    deviceId = data.device_id;
+                    document.getElementById('deviceId').textContent = 'Device ID: ' + deviceId;
+                })
+                .catch(e => {
+                    console.log('Could not fetch device info');
+                    deviceId = 'plant-monitor-unknown';
+                });
+        } else {
+            document.getElementById('deviceId').textContent = 'Device ID: ' + deviceId;
+        }
+
+        document.getElementById('setupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const statusDiv = document.getElementById('status');
+            const formData = new FormData(document.getElementById('setupForm'));
+
+            const data = {
+                device_id: deviceId,
+                user_name: formData.get('user_name'),
+                plant_1_name: formData.get('plant_1_name') || 'Plant 1',
+                plant_2_name: formData.get('plant_2_name') || 'Plant 2',
+                location: formData.get('location') || 'Home'
+            };
+
+            statusDiv.textContent = 'Setting up device...';
+            statusDiv.className = 'status loading';
+
+            try {
+                // For local setup, post to a local endpoint first
+                const response = await fetch('/api/setup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Setup failed');
+                }
+
+                const result = await response.json();
+                statusDiv.innerHTML = `<strong>✅ Setup Complete!</strong><br>Your device is configured. You can now disconnect from this WiFi network and your device will connect to your home network.`;
+                statusDiv.className = 'status success';
+
+                document.getElementById('setupForm').style.display = 'none';
+
+            } catch (error) {
+                statusDiv.textContent = '❌ Setup failed: ' + error.message;
+                statusDiv.className = 'status error';
+            }
+        });
+    </script>
+</body>
+</html>
