@@ -24,8 +24,8 @@ wifi:
   password: !secret wifi_password
   fast_connect: true
   ap:
-    ssid: "Plant-Monitor Fallback"
-    password: "ND9kIKauNGyJ"
+    ssid: "Plant-Monitor Ronak"
+    password: "flowers123"
 
 captive_portal:
 

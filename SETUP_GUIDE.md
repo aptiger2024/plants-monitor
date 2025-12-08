@@ -23,8 +23,8 @@ Your Plant Monitor device has been pre-configured and is ready to go! This guide
 ### Step 2: Connect to Device Hotspot
 
 1. On your phone or computer, open WiFi settings
-2. Look for the network: **"Plant-Monitor Fallback"**
-3. Connect to it using password: **ND9kIKauNGyJ**
+2. Look for the network: **"Plant-Monitor [Name]"** (e.g., "Plant-Monitor Laurie")
+3. Connect to it using password: **flowers123**
 
 *Note: This network has NO internet. It's only for setup. Don't worry - once setup is complete, the device will automatically connect to your home WiFi.*
 
@@ -137,7 +137,7 @@ For technical support or to reconfigure your device:
 2. If needed, the device can be reset by:
    - Unplugging for 30 seconds
    - Plugging back in
-   - Reconnecting to "Plant-Monitor Fallback" hotspot
+   - Reconnecting to "Plant-Monitor [Name]" hotspot
    - Completing setup again with new information
 
 ## Enjoying Your Plant Monitor
