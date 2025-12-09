@@ -946,10 +946,42 @@
             document.getElementById('settingsModal').classList.remove('show');
         }
 
-        function saveSettings() {
-            // For now, settings are display-only (would need API endpoint to persist)
-            closeSettings();
-            alert('Settings saved locally! 💾\n(Note: Full settings sync coming soon)');
+        async function saveSettings() {
+            if (!currentDevice) {
+                alert('No device selected!');
+                return;
+            }
+
+            const plantName = document.getElementById('settingsPlantName').value.trim();
+            const location = document.getElementById('settingsLocation').value.trim();
+
+            try {
+                const response = await fetch(
+                    `${API_BASE_URL}/device/${currentDevice.device_id}/plant/${currentPlant}`,
+                    {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            plant_name: plantName || null,
+                            location: location || null
+                        })
+                    }
+                );
+
+                if (response.ok) {
+                    closeSettings();
+                    await loadDevices();  // Refresh data
+                    alert('Settings saved! 💾');
+                } else {
+                    const error = await response.json();
+                    alert(`Failed to save: ${error.detail || 'Unknown error'}`);
+                }
+            } catch (e) {
+                console.error('Failed to save settings:', e);
+                alert('Failed to save settings. Check your connection.');
+            }
         }
 
         async function refreshData() {

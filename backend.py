@@ -377,6 +377,55 @@ async def provision_device(request: SensorReadingRequest, db: Session = Depends(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+class PlantSettingsRequest(BaseModel):
+    """Request body for updating plant settings"""
+    plant_name: Optional[str] = None
+    location: Optional[str] = None
+
+
+@app.put("/device/{device_id}/plant/{plant_number}", response_model=Dict[str, Any])
+async def update_plant_settings(
+    device_id: str,
+    plant_number: int,
+    request: PlantSettingsRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Update plant name and location for a specific plant on a device.
+    This updates the most recent reading's metadata.
+    """
+    if plant_number not in [1, 2]:
+        raise HTTPException(status_code=400, detail="plant_number must be 1 or 2")
+
+    # Get the most recent reading for this plant
+    reading = db.query(MoistureSensor).filter(
+        MoistureSensor.device_id == device_id,
+        MoistureSensor.plant_number == plant_number
+    ).order_by(MoistureSensor.timestamp.desc()).first()
+
+    if not reading:
+        raise HTTPException(status_code=404, detail="No readings found for this plant")
+
+    # Update the reading's metadata
+    if request.plant_name is not None:
+        reading.plant_name = request.plant_name
+    if request.location is not None:
+        reading.location = request.location
+
+    # Also update all future readings by updating the device's default plant names
+    # For now, we'll just update this reading - future readings will pick up names from device POSTs
+
+    db.commit()
+
+    return {
+        "status": "updated",
+        "device_id": device_id,
+        "plant_number": plant_number,
+        "plant_name": reading.plant_name,
+        "location": reading.location
+    }
+
+
 @app.get("/devices", response_model=Dict[str, Any])
 async def list_devices(db: Session = Depends(get_db)):
     """Get all registered devices and their latest status"""
