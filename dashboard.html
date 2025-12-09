@@ -599,7 +599,7 @@
             <div class="buttons">
                 <button class="btn-primary" onclick="openSettings()">⚙️ Settings</button>
                 <button class="btn-secondary" onclick="refreshData()">🔄 Refresh</button>
-                <button class="btn-secondary replay-btn" onclick="playWelcomeAnimation()">📺 Intro</button>
+                <button class="btn-secondary replay-btn" onclick="openWelcomeModal()">📺 Intro</button>
             </div>
 
             <div class="last-update" id="lastUpdate">
@@ -759,6 +759,7 @@
                         currentDevice = devices[0];
                     }
                     document.getElementById('deviceSelector').value = currentDevice.device_id;
+                    updatePlantSelector();
                     updateDisplay();
                 } else {
                     showNoDevices();
@@ -808,10 +809,10 @@
             const deviceId = document.getElementById('deviceSelector').value;
             currentDevice = devices.find(d => d.device_id === deviceId);
             currentPlant = 1;
-            document.getElementById('plantSelector').value = '1';
 
             if (currentDevice) {
                 setCookie('selectedDevice', deviceId);
+                updatePlantSelector();
                 updateDisplay();
             }
         }
@@ -819,6 +820,28 @@
         function loadPlant() {
             currentPlant = parseInt(document.getElementById('plantSelector').value);
             updateDisplay();
+        }
+
+        function updatePlantSelector() {
+            if (!currentDevice) return;
+
+            const selector = document.getElementById('plantSelector');
+            const plant1Name = currentDevice.plant_1?.name || 'Plant 1';
+            const plant2Name = currentDevice.plant_2?.name || 'Plant 2';
+
+            selector.innerHTML = '';
+
+            const opt1 = document.createElement('option');
+            opt1.value = '1';
+            opt1.textContent = `🌿 ${plant1Name}`;
+            selector.appendChild(opt1);
+
+            const opt2 = document.createElement('option');
+            opt2.value = '2';
+            opt2.textContent = `🪴 ${plant2Name}`;
+            selector.appendChild(opt2);
+
+            selector.value = currentPlant.toString();
         }
 
         function updateDisplay() {
