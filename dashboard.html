@@ -537,16 +537,13 @@
             <h1>🌱 Plant Monitor</h1>
 
             <div class="selector-group">
-                <select class="user-selector" id="userSelector" onchange="loadUser()">
-                    <option value="sarah">👩 Sarah's Plants</option>
-                    <option value="tom">👨 Tom's Plants</option>
-                    <option value="alex">🧑 Alex's Plants</option>
-                    <option value="jordan">👩‍🤝‍👨 Jordan's Plants</option>
+                <select class="user-selector" id="deviceSelector" onchange="loadDevice()">
+                    <option value="">Loading devices...</option>
                 </select>
 
                 <select class="plant-selector" id="plantSelector" onchange="loadPlant()">
-                    <option value="plant1">🌿 Plant 1</option>
-                    <option value="plant2">🪴 Plant 2</option>
+                    <option value="1">🌿 Plant 1</option>
+                    <option value="2">🪴 Plant 2</option>
                 </select>
             </div>
         </div>
@@ -693,122 +690,10 @@
     </div>
 
     <script>
-        // API Configuration
-        const API_BASE_URL = 'https://plants.suplexcentral.com/api';
+        // API Configuration - use relative URL since dashboard is served from same origin
+        const API_BASE_URL = '';
 
-        // Device-to-user mapping
-        // In a real app, this would come from the database
-        const deviceUserMap = {
-            'plant-monitor-1': 'sarah',
-            'plant-monitor-2': 'tom',
-            'plant-monitor-3': 'alex',
-            'plant-monitor-4': 'jordan'
-        };
-
-        // Default mock data (fallback if API is down)
-        const users = {
-            sarah: {
-                name: "Sarah",
-                plants: {
-                    plant1: {
-                        name: "Monstera",
-                        location: "Living Room",
-                        icon: "🪴",
-                        moisture: 65,
-                        type: "tropical",
-                        low: 30,
-                        high: 70,
-                        critical: 15
-                    },
-                    plant2: {
-                        name: "Pothos",
-                        location: "Bedroom",
-                        icon: "🍃",
-                        moisture: 42,
-                        type: "tropical",
-                        low: 30,
-                        high: 70,
-                        critical: 15
-                    }
-                }
-            },
-            tom: {
-                name: "Tom",
-                plants: {
-                    plant1: {
-                        name: "Snake Plant",
-                        location: "Kitchen",
-                        icon: "🐍",
-                        moisture: 25,
-                        type: "succulent",
-                        low: 20,
-                        high: 40,
-                        critical: 10
-                    },
-                    plant2: {
-                        name: "Fiddle Leaf Fig",
-                        location: "Home Office",
-                        icon: "🌳",
-                        moisture: 55,
-                        type: "tropical",
-                        low: 30,
-                        high: 70,
-                        critical: 15
-                    }
-                }
-            },
-            alex: {
-                name: "Alex",
-                plants: {
-                    plant1: {
-                        name: "Succulent",
-                        location: "Window Sill",
-                        icon: "🌵",
-                        moisture: 18,
-                        type: "succulent",
-                        low: 20,
-                        high: 40,
-                        critical: 10
-                    },
-                    plant2: {
-                        name: "Peace Lily",
-                        location: "Bathroom",
-                        icon: "🤍",
-                        moisture: 72,
-                        type: "tropical",
-                        low: 50,
-                        high: 80,
-                        critical: 40
-                    }
-                }
-            },
-            jordan: {
-                name: "Jordan",
-                plants: {
-                    plant1: {
-                        name: "Rubber Plant",
-                        location: "Entryway",
-                        icon: "🍂",
-                        moisture: 48,
-                        type: "tropical",
-                        low: 30,
-                        high: 70,
-                        critical: 15
-                    },
-                    plant2: {
-                        name: "Aloe Vera",
-                        location: "Desk",
-                        icon: "💚",
-                        moisture: 22,
-                        type: "succulent",
-                        low: 20,
-                        high: 40,
-                        critical: 10
-                    }
-                }
-            }
-        };
-
+        // Cheeky messages
         const messages = {
             happy: [
                 "Living my best life! 🌿",
@@ -834,176 +719,160 @@
             ]
         };
 
-        let currentUser = 'sarah';
-        let currentPlant = 'plant1';
+        // State
+        let devices = [];
+        let currentDevice = null;
+        let currentPlant = 1;
         let welcomeStage = 0;
-        let apiAvailable = false;
         let autoRefreshInterval = null;
 
         // Initialize on page load
         window.addEventListener('load', async function() {
-            // Check if API is available
-            try {
-                const response = await fetch(API_BASE_URL + '/');
-                apiAvailable = response.ok;
-                console.log('API status:', apiAvailable ? 'Available' : 'Unavailable');
-            } catch (e) {
-                console.log('API is not available, using mock data');
-                apiAvailable = false;
-            }
+            await loadDevices();
 
-            // Load saved user or show welcome
-            const savedUser = getCookie('plantMonitorUser');
-            if (savedUser && users[savedUser]) {
-                currentUser = savedUser;
-                updatePlantSelector();
-                loadDataForCurrentUser();
-            } else {
+            // Auto-refresh data every 30 seconds
+            autoRefreshInterval = setInterval(loadDevices, 30000);
+
+            // Check if first time visitor
+            const hasVisited = getCookie('hasVisited');
+            if (!hasVisited) {
+                setCookie('hasVisited', 'true');
                 openWelcomeModal();
-            }
-
-            // Auto-refresh data every 30 seconds if API is available
-            if (apiAvailable) {
-                autoRefreshInterval = setInterval(loadDataForCurrentUser, 30000);
             }
         });
 
-        // Fetch real device data from API
-        async function loadDataForCurrentUser() {
-            if (!apiAvailable) {
-                updateDisplay();
+        // Fetch devices from API
+        async function loadDevices() {
+            try {
+                const response = await fetch(API_BASE_URL + '/devices');
+                const data = await response.json();
+
+                devices = data.devices || [];
+                updateDeviceSelector();
+
+                if (devices.length > 0) {
+                    // Load saved device or use first one
+                    const savedDevice = getCookie('selectedDevice');
+                    if (savedDevice && devices.find(d => d.device_id === savedDevice)) {
+                        currentDevice = devices.find(d => d.device_id === savedDevice);
+                    } else {
+                        currentDevice = devices[0];
+                    }
+                    document.getElementById('deviceSelector').value = currentDevice.device_id;
+                    updateDisplay();
+                } else {
+                    showNoDevices();
+                }
+            } catch (e) {
+                console.error('Failed to load devices:', e);
+                showNoDevices();
+            }
+        }
+
+        function updateDeviceSelector() {
+            const selector = document.getElementById('deviceSelector');
+            selector.innerHTML = '';
+
+            if (devices.length === 0) {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = '🌱 No devices yet...';
+                selector.appendChild(option);
                 return;
             }
 
-            try {
-                // Get all devices from API
-                const devicesResponse = await fetch(API_BASE_URL + '/devices');
-                const data = await devicesResponse.json();
-
-                if (!data.devices || data.devices.length === 0) {
-                    console.log('No devices in API, using mock data');
-                    updateDisplay();
-                    return;
-                }
-
-                // Update user data with real values
-                for (const device of data.devices) {
-                    const userKey = Object.keys(deviceUserMap).find(
-                        key => deviceUserMap[key] === currentUser
-                    );
-
-                    if (device.device_id === userKey && users[currentUser]) {
-                        if (device.plant_1) {
-                            users[currentUser].plants.plant1.moisture = device.plant_1.moisture;
-                            users[currentUser].plants.plant1.name = device.plant_1.name || users[currentUser].plants.plant1.name;
-                            users[currentUser].plants.plant1.location = device.plant_1.location || users[currentUser].plants.plant1.location;
-                        }
-                        if (device.plant_2) {
-                            users[currentUser].plants.plant2.moisture = device.plant_2.moisture;
-                            users[currentUser].plants.plant2.name = device.plant_2.name || users[currentUser].plants.plant2.name;
-                            users[currentUser].plants.plant2.location = device.plant_2.location || users[currentUser].plants.plant2.location;
-                        }
-                    }
-                }
-
-                updateDisplay();
-            } catch (e) {
-                console.error('Failed to load data from API:', e);
-                // Fallback to mock data
-                updateDisplay();
-            }
-        }
-
-        // Cookie functions
-        function setCookie(name, value, days = 365) {
-            const d = new Date();
-            d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
-            const expires = "expires=" + d.toUTCString();
-            document.cookie = name + "=" + value + ";" + expires + ";path=/";
-        }
-
-        function getCookie(name) {
-            const nameEQ = name + "=";
-            const ca = document.cookie.split(';');
-            for (let i = 0; i < ca.length; i++) {
-                let c = ca[i].trim();
-                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length);
-            }
-            return null;
-        }
-
-        function deleteCookie(name) {
-            document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        }
-
-        function loadUser() {
-            const selected = document.getElementById('userSelector').value;
-            currentUser = selected;
-            currentPlant = 'plant1';
-
-            // Save user preference
-            setCookie('plantMonitorUser', selected);
-
-            // Update plant selector to show user's plants
-            updatePlantSelector();
-
-            // Load fresh data (from API if available)
-            loadDataForCurrentUser();
-        }
-
-        function updatePlantSelector() {
-            const user = users[currentUser];
-            const plantSelector = document.getElementById('plantSelector');
-
-            // Clear existing options
-            plantSelector.innerHTML = '';
-
-            // Add user's plants as options
-            Object.keys(user.plants).forEach((plantKey, index) => {
-                const plant = user.plants[plantKey];
+            devices.forEach(device => {
                 const option = document.createElement('option');
-                option.value = plantKey;
-                option.textContent = `${plant.icon} ${plant.name}`;
-                plantSelector.appendChild(option);
+                option.value = device.device_id;
+                // Extract friendly name from device_id (e.g., "plant-monitor-laurie" -> "Laurie")
+                const name = device.owner_name || device.device_id.replace('plant-monitor-', '').replace(/-/g, ' ');
+                const displayName = name.charAt(0).toUpperCase() + name.slice(1);
+                option.textContent = `🌱 ${displayName}'s Plants`;
+                selector.appendChild(option);
             });
+        }
 
-            plantSelector.value = 'plant1';
+        function showNoDevices() {
+            document.getElementById('moisturePercent').textContent = '--';
+            document.getElementById('moistureFill').style.width = '0%';
+            document.getElementById('plantName').textContent = 'No device connected';
+            document.getElementById('plantLocation').textContent = 'Waiting for data...';
+            document.getElementById('plantStatus').textContent = 'Offline';
+            document.getElementById('statusBadge').textContent = '📡 Waiting';
+            document.getElementById('statusBadge').className = 'status-badge status-warning';
+            document.getElementById('plantMessage').textContent = '"Connect a plant monitor to get started!"';
+            document.getElementById('lastReading').textContent = 'Never';
+        }
+
+        function loadDevice() {
+            const deviceId = document.getElementById('deviceSelector').value;
+            currentDevice = devices.find(d => d.device_id === deviceId);
+            currentPlant = 1;
+            document.getElementById('plantSelector').value = '1';
+
+            if (currentDevice) {
+                setCookie('selectedDevice', deviceId);
+                updateDisplay();
+            }
         }
 
         function loadPlant() {
-            const selected = document.getElementById('plantSelector').value;
-            currentPlant = selected;
+            currentPlant = parseInt(document.getElementById('plantSelector').value);
             updateDisplay();
         }
 
         function updateDisplay() {
-            const plant = users[currentUser].plants[currentPlant];
-            const moisture = plant.moisture;
+            if (!currentDevice) {
+                showNoDevices();
+                return;
+            }
+
+            const plantData = currentPlant === 1 ? currentDevice.plant_1 : currentDevice.plant_2;
+
+            if (!plantData || plantData.moisture === null) {
+                document.getElementById('moisturePercent').textContent = '--';
+                document.getElementById('moistureFill').style.width = '0%';
+                document.getElementById('plantName').textContent = plantData?.name || `Plant ${currentPlant}`;
+                document.getElementById('plantLocation').textContent = 'Waiting for reading...';
+                document.getElementById('plantStatus').textContent = 'No data';
+                document.getElementById('statusBadge').textContent = '📡 Waiting';
+                document.getElementById('statusBadge').className = 'status-badge status-warning';
+                document.getElementById('plantMessage').textContent = '"First reading coming soon..."';
+                return;
+            }
+
+            const moisture = Math.round(plantData.moisture);
+            const plantName = plantData.name || `Plant ${currentPlant}`;
+
+            // Default thresholds
+            const low = 30;
+            const high = 70;
+            const critical = 15;
 
             // Update main display
-            document.getElementById('plantIcon').textContent = plant.icon;
+            document.getElementById('plantIcon').textContent = currentPlant === 1 ? '🌿' : '🪴';
             document.getElementById('moisturePercent').textContent = moisture;
-            document.getElementById('moistureFill').style.width = moisture + '%';
-            document.getElementById('plantName').textContent = plant.name;
-            document.getElementById('plantLocation').textContent = plant.location;
+            document.getElementById('moistureFill').style.width = Math.min(100, Math.max(0, moisture)) + '%';
+            document.getElementById('plantName').textContent = plantName;
+            document.getElementById('plantLocation').textContent = plantData.location || 'Not set';
 
-            // Update thresholds
-            document.getElementById('lowThreshold').textContent = plant.low + '%';
-            document.getElementById('highThreshold').textContent = plant.high + '%';
+            // Update thresholds display
+            document.getElementById('lowThreshold').textContent = low + '%';
+            document.getElementById('highThreshold').textContent = high + '%';
 
             // Determine status
             let status, statusClass, messageArray;
-            if (moisture < plant.critical) {
+            if (moisture < critical) {
                 status = '🚨 Critical';
                 statusClass = 'status-critical';
                 messageArray = messages.critical;
                 document.getElementById('plantStatus').textContent = 'Dying';
-            } else if (moisture < plant.low) {
+            } else if (moisture < low) {
                 status = '⚠️ Dry';
                 statusClass = 'status-warning';
                 messageArray = messages.warning;
                 document.getElementById('plantStatus').textContent = 'Thirsty';
-            } else if (moisture > plant.high) {
+            } else if (moisture > high) {
                 status = '⚠️ Wet';
                 statusClass = 'status-warning';
                 messageArray = messages.warning;
@@ -1025,19 +894,51 @@
             document.getElementById('plantMessage').textContent = '"' + randomMessage + '"';
 
             // Update timestamp
+            const lastSeen = new Date(currentDevice.last_seen);
             const now = new Date();
-            document.getElementById('lastReading').textContent = 'just now';
+            const diffMs = now - lastSeen;
+            const diffMins = Math.floor(diffMs / 60000);
+
+            let timeAgo;
+            if (diffMins < 1) timeAgo = 'just now';
+            else if (diffMins < 60) timeAgo = `${diffMins} min ago`;
+            else if (diffMins < 1440) timeAgo = `${Math.floor(diffMins/60)} hours ago`;
+            else timeAgo = `${Math.floor(diffMins/1440)} days ago`;
+
+            document.getElementById('lastReading').textContent = timeAgo;
             document.getElementById('lastUpdate').textContent = 'Last sync: ' + now.toLocaleTimeString();
         }
 
+        // Cookie functions
+        function setCookie(name, value, days = 365) {
+            const d = new Date();
+            d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+            const expires = "expires=" + d.toUTCString();
+            document.cookie = name + "=" + value + ";" + expires + ";path=/";
+        }
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i].trim();
+                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length);
+            }
+            return null;
+        }
+
         function openSettings() {
-            const plant = users[currentUser].plants[currentPlant];
-            document.getElementById('settingsPlantName').value = plant.name;
-            document.getElementById('settingsLocation').value = plant.location;
-            document.getElementById('settingsPlantType').value = plant.type;
-            document.getElementById('settingsLowThreshold').value = plant.low;
-            document.getElementById('settingsHighThreshold').value = plant.high;
-            document.getElementById('settingsCriticalThreshold').value = plant.critical;
+            if (!currentDevice) {
+                alert('No device selected!');
+                return;
+            }
+            const plantData = currentPlant === 1 ? currentDevice.plant_1 : currentDevice.plant_2;
+            document.getElementById('settingsPlantName').value = plantData?.name || '';
+            document.getElementById('settingsLocation').value = plantData?.location || '';
+            document.getElementById('settingsPlantType').value = 'tropical';
+            document.getElementById('settingsLowThreshold').value = 30;
+            document.getElementById('settingsHighThreshold').value = 70;
+            document.getElementById('settingsCriticalThreshold').value = 15;
             document.getElementById('settingsModal').classList.add('show');
         }
 
@@ -1046,35 +947,21 @@
         }
 
         function saveSettings() {
-            const plant = users[currentUser].plants[currentPlant];
-            plant.name = document.getElementById('settingsPlantName').value;
-            plant.location = document.getElementById('settingsLocation').value;
-            plant.type = document.getElementById('settingsPlantType').value;
-            plant.low = parseInt(document.getElementById('settingsLowThreshold').value);
-            plant.high = parseInt(document.getElementById('settingsHighThreshold').value);
-            plant.critical = parseInt(document.getElementById('settingsCriticalThreshold').value);
-
+            // For now, settings are display-only (would need API endpoint to persist)
             closeSettings();
-            updateDisplay();
-            alert('Settings saved! 💾');
+            alert('Settings saved locally! 💾\n(Note: Full settings sync coming soon)');
         }
 
-        function refreshData() {
-            // Simulate new data
-            users[currentUser].plants[currentPlant].moisture = Math.floor(Math.random() * 100);
-            updateDisplay();
-            alert('Data refreshed!');
+        async function refreshData() {
+            await loadDevices();
+            alert('Data refreshed! 🔄');
         }
 
         // Close modal when clicking outside
         window.onclick = function(event) {
             const settingsModal = document.getElementById('settingsModal');
-            const welcomeModal = document.getElementById('welcomeModal');
             if (event.target == settingsModal) {
                 settingsModal.classList.remove('show');
-            }
-            if (event.target == welcomeModal) {
-                // Don't close welcome by clicking outside
             }
         }
 
@@ -1093,17 +980,16 @@
             document.getElementById('alarmText').style.display = 'none';
             document.getElementById('waterDrops').innerHTML = '';
 
-            // Animate plant drooping and watering
             const plant = document.getElementById('welcomePlant');
+            plant.style.animation = 'none';
+            plant.offsetHeight; // Trigger reflow
             plant.style.animation = 'plantAnimation 8s';
 
-            // Show alarm at 50% (4s)
             setTimeout(() => {
                 document.getElementById('alarmText').style.display = 'block';
                 playAlarmSound();
             }, 4000);
 
-            // Spawn water drops at 65% (5.2s)
             setTimeout(() => {
                 document.getElementById('alarmText').style.display = 'none';
                 spawnWaterDrops();
@@ -1125,23 +1011,25 @@
         }
 
         function playAlarmSound() {
-            // Create a simple beep using Web Audio API
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
 
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
 
-            // Plant alarm: descending frequency
-            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-            oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.3);
+                oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.3);
 
-            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
 
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.3);
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.3);
+            } catch (e) {
+                // Audio not supported, ignore
+            }
         }
 
         function progressWelcome() {
@@ -1159,32 +1047,11 @@
 
         function completeWelcome() {
             const userName = document.getElementById('userNameInput').value.trim();
-
             if (userName) {
                 setCookie('userName', userName);
-                // Set the user selector to the saved name or just show they've personalized
-                document.getElementById('userNameInput').value = '';
             }
-
             document.getElementById('welcomeModal').classList.remove('show');
             welcomeStage = 0;
-        }
-
-        // Initialize
-        updatePlantSelector();
-        updateDisplay();
-
-        // Check if first time visitor
-        const hasVisited = getCookie('hasVisited');
-        if (!hasVisited) {
-            setCookie('hasVisited', 'true');
-            openWelcomeModal();
-        } else {
-            // Load previously saved user name if exists
-            const savedName = getCookie('userName');
-            if (savedName) {
-                // You could use this to personalize greetings later
-            }
         }
     </script>
 </body>
