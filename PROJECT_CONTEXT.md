@@ -5,132 +5,130 @@ Building custom **plant moisture monitors** as gifts for friends. Each device mo
 
 **Tech Stack:**
 - Hardware: ESP-32 + dual capacitive soil moisture sensors + 0.96" I2C OLED display
-- Firmware: ESPHome (YAML-based)
+- Firmware: ESPHome (YAML-based, esp-idf framework)
 - Backend: FastAPI (Python) on home server (Proxmox/Docker/Portainer)
-- Dashboard: Single-page HTML with user selector (no passwords, trusted friends only)
-- Notifications: Telegram bot via N8N
+- Dashboard: Single-page HTML served from API (dynamic, real device data)
+- CI/CD: GitHub Actions builds Docker images to ghcr.io
+- Notifications: Telegram bot via N8N (planned)
+
+**Recipients:**
+- Laurie (`plant-monitor-laurie`)
+- Rhea (`plant-monitor-rhea`)
+- Ronak (`plant-monitor-ronak`)
 
 ---
 
-## Current Status
+## Current Status (Session 6 - 2025-12-09)
 
-### ✅ Completed
-1. **Parts List** - All hardware sourced and ready to order
-2. **Web Dashboard** (`dashboard.html`) - Enhanced with:
-   - User selector (Sarah, Tom, Alex, Jordan)
-   - Plant selector (dynamically updates per user)
-   - Moisture display with animated plant icon
-   - Cheeky messages (happy/warning/critical)
-   - Settings modal for customizing thresholds
-   - **NEW:** Welcome screen with cute plant animation
-   - **NEW:** Plant droops/wilts animation when dry
-   - **NEW:** Alarm sound when plant critical
-   - **NEW:** Water sprinkles animation
-   - **NEW:** Cookie-based user persistence (remembers name)
-   - No authentication (trusted friends)
+### ✅ FULLY WORKING END-TO-END
+1. **Laurie's device flashed and tested** - Successfully:
+   - Boots and creates "Plant-Monitor Laurie" hotspot
+   - User connects, configures WiFi via captive portal at http://192.168.4.1
+   - WiFi credentials persist to flash (survives power cycles!)
+   - Device connects to home WiFi and POSTs sensor data every 5 minutes
+   - Data appears on dashboard at https://plants.suplexcentral.com
 
-3. **ESPHome Installation** - Set up on Windows
-   - ESPHome dashboard runs: `python -m esphome dashboard .`
-   - Quick start guide created: `ESPHOME_QUICKSTART.md`
-   - Use web flasher (https://web.esphome.io/) for flashing - most reliable!
+2. **Dashboard (plants.suplexcentral.com)** - Fully functional:
+   - Fetches real device data from `/devices` API
+   - Device selector dropdown (auto-populated from registered devices)
+   - Plant selector shows actual plant names (persisted)
+   - Settings modal saves plant names/locations to database
+   - Plant names persist (stored in separate `PlantConfig` table)
+   - Welcome intro animation works (replay via Intro button)
+   - Auto-refreshes every 30 seconds
+   - Cheeky messages based on moisture level
 
-4. **Firmware Config** (`plant-monitor.yaml`) - Compiled successfully ✅
-   - Dual moisture sensors (GPIO34 & GPIO35)
-   - I2C OLED display (GPIO21 & GPIO22)
-   - WiFi connectivity
-   - API ready for integration
-   - Critical alerts (<20% moisture)
+3. **Backend API** - Running on srv-media-2:7000:
+   - `POST /reading` - Receive sensor data from devices
+   - `GET /devices` - List all devices with latest readings
+   - `PUT /device/{id}/plant/{num}` - Update plant name/location (persists!)
+   - `GET /device/{id}` - Get specific device status
+   - `GET /device/{id}/plant/{num}/history` - Historical data
+   - Database tables: `moisture_sensors`, `devices`, `plant_configs`
 
-### ✅ Recent Fixes (Session 3-4)
-- **Firmware Flash Issue RESOLVED** ✅
-  - Root cause: Web flasher was missing bootloader + partition table
-  - Solution: Used esptool to flash bootloader, partition table, and firmware together
-  - ESP-32 now boots successfully and connects to WiFi
-  - Switched framework from Arduino to esp-idf for stability
+4. **CI/CD Pipeline** - GitHub Actions:
+   - Pushes to main trigger automatic Docker builds
+   - Images pushed to `ghcr.io/aptiger2024/plants-monitor:latest`
+   - Portainer just needs "Pull and redeploy" (no more cache issues!)
 
-- **FastAPI Backend Created & Deployed** ✅
-  - Full REST API for receiving and retrieving sensor data
-  - SQLite database for persistent storage
-  - Endpoints for: readings, device status, historical data, device list
-  - CORS enabled for web dashboard integration
-  - API docs at http://localhost:8000/docs
-  - Running on srv-media-2:7000 via Portainer
-  - Database uses persistent Docker volume
+### ✅ Hardware Ready
+- All components acquired for building devices
+- ESP-32 boards, sensors, charger modules, batteries, enclosures ready
 
-- **Type Annotation Bugs Fixed** ✅ (Session 4)
-  - Fixed FastAPI response model validation errors
-  - All endpoints now use proper dependency injection with `Depends(get_db)`
-  - Added explicit `response_model=Dict[str, Any]` to all endpoints
-  - Changes pushed to GitHub, ready for Portainer rebuild
-
-- **Comprehensive Documentation Created** ✅ (Session 4)
-  - DEVICE_SETUP_GUIDE.md - For gift recipients (non-technical)
-  - BUILDER_DEVICE_CONFIG_GUIDE.md - Complete device build & config guide
-  - QUICK_START_YOUR_NEXT_DEVICE.md - Checklist for building devices #2-5
-  - DEVICE_REGISTRATION_EXPLAINED.md - How registration and data flow works
-  - DOCUMENTATION_INDEX.md - Master navigation index
-  - NEXT_STEPS_FOR_YOU.md - Immediate action items
-
-### ✅ WiFi Provisioning System (Session 5)
-- **Per-device firmware configs created** ✅
-  - `plant-monitor-laurie.yaml`
-  - `plant-monitor-rhea.yaml`
-  - `plant-monitor-ronak.yaml`
-- **Captive Portal** - Devices create WiFi hotspot (e.g., "Plant-Monitor Laurie") for setup
-- **Web Server** - Local config page at http://192.168.4.1 (admin/admin)
-- **Persistent WiFi Storage** - Credentials saved to flash, survive power cycles
-- **Setup Guide Created** - SETUP_GUIDE.md for gift recipients
-- **Firmware compiled** for all three devices ✅
-
-### 🔄 In Progress
-- Waiting for capacitive soil moisture sensors to arrive
-- Charger board arrived (micro USB) - found USB-C alternative: https://www.amazon.ca/Charging-Lithium-Battery-Protection-Discharge/dp/B0D7Z92K51/ ✅
-
-### ⏳ Not Started
-- Soldering sensors to first ESP-32 device (waiting on sensors)
-- N8N Telegram bot workflow
-- Making all 3-5 devices
-- OLED display integration (currently disabled for stability)
+### ⏳ Pending
+- Finalize firmware template (Laurie's config is the working template)
+- Compile Rhea and Ronak firmware (just change device name)
+- Solder sensors and assemble physical devices
+- N8N Telegram notifications
+- OLED display integration (disabled for now)
+- Captive portal styling (functional but plain)
 
 ---
 
-## Hardware Setup
+## Firmware Template (Working)
 
-### Per Device
-```
-1x ESP-32 (NodeMCU)
-1x TP4056 USB-C Charger Module
-1x 18650 Li-ion Battery (3000-3500mAh)
-1x 18650 Battery Holder (pre-soldered wires)
-1x 0.96" I2C OLED Display
-2x Capacitive Soil Moisture Sensors
-1x Small plastic project box (enclosure)
+**File:** `esphome-config/plant-monitor-laurie.yaml`
+
+**Key Features:**
+```yaml
+# WiFi Provisioning (no hardcoded credentials)
+wifi:
+  ap:
+    ssid: "Plant-Monitor Laurie"
+    password: "flowers123"
+  reboot_timeout: 0s  # Go straight to AP mode
+
+captive_portal:  # Enables WiFi config page
+
+web_server:
+  port: 80  # No auth needed (only accessible on device hotspot)
+
+# Sensors with calibration
+sensor:
+  - platform: adc
+    pin: GPIO34/GPIO35
+    filters:
+      - calibrate_linear:
+          - 3.0 -> 0.0   # Dry
+          - 1.5 -> 100.0 # Wet
+      - clamp: 0-100
+
+# API Upload every 5 minutes
+interval:
+  - interval: 5min
+    then:
+      - http_request.post:
+          url: "https://plants.suplexcentral.com/reading"
+          json: device_id, moisture values, user_name
 ```
 
-### Pin Assignment
-| Component | Pin(s) | Type |
-|-----------|--------|------|
-| Sensor 1 | GPIO34 | ADC Input |
-| Sensor 2 | GPIO35 | ADC Input |
-| OLED SDA | GPIO21 | I2C |
-| OLED SCL | GPIO22 | I2C |
-| OLED Power | 3.3V + GND | Power |
-| Battery | 5V from TP4056 | Power |
+**To create Rhea/Ronak configs:** Copy Laurie's, change:
+- `name: plant-monitor-rhea` / `plant-monitor-ronak`
+- `friendly_name: "Rhea's Plant Monitor"` / `"Ronak's Plant Monitor"`
+- `ap: ssid: "Plant-Monitor Rhea"` / `"Plant-Monitor Ronak"`
+- `root["device_id"]` and `root["user_name"]` in the JSON
 
-### Physical Layout
-```
-┌─────────────────────────────────┐
-│     OLED Display (0.96")        │
-│                                 │
-│  ESP-32, TP4056, 18650 inside   │
-│                                 │
-│  [USB-C Port] (back)           │
-│                                 │
-│  Two sensor wires exit bottom:  │
-│  └─→ Plant 1 sensor            │
-│  └─→ Plant 2 sensor            │
-└─────────────────────────────────┘
-```
+---
+
+## User Setup Flow (for Setup Card)
+
+### What's in the Box
+- Plant Monitor device
+- USB-C power cable
+- 2 moisture sensor probes
+- Setup card
+
+### Setup Steps
+1. **Power On** - Connect USB-C, wait ~30 seconds
+2. **Connect to Device WiFi** - Find "Plant-Monitor [Name]", password: `flowers123`
+3. **Configure WiFi** - Browser opens http://192.168.4.1, select home WiFi, enter password
+4. **Done!** - Device connects to home WiFi, phone disconnects (normal!)
+5. **Check Plants** - Visit plants.suplexcentral.com within 5 minutes
+
+### Troubleshooting
+- Can't find hotspot? Unplug/replug device
+- Not on dashboard? Wait 5 min (uploads every 5 min)
+- Need to change WiFi? Unplug, replug, repeat setup
 
 ---
 
@@ -138,185 +136,168 @@ Building custom **plant moisture monitors** as gifts for friends. Each device mo
 
 ```
 D:\nextcloud\projects\plants\
-├── dashboard.html                    # Web dashboard (complete with animations)
-├── backend.py                        # FastAPI backend (running on :8000)
-├── API_DOCS.md                       # API documentation
-├── ESPHOME_QUICKSTART.md             # ESPHome quick start guide
+├── backend.py                        # FastAPI backend
+├── dashboard.html                    # Web dashboard (served by API)
+├── Dockerfile.api                    # Docker build config
+├── docker-compose.yml                # Uses ghcr.io image (not git build)
+├── requirements.txt                  # Python dependencies
+├── .github/workflows/docker-build.yml # CI/CD pipeline
 ├── PROJECT_CONTEXT.md                # This file
-├── plants.db                         # SQLite database (auto-created)
-└── esphome-config/
-    ├── plant-monitor.yaml            # Firmware config (tested & working)
-    └── secrets.yaml                  # WiFi credentials (Tigernet3)
+├── SETUP_GUIDE.md                    # User setup instructions
+├── esphome-config/
+│   ├── plant-monitor-laurie.yaml     # WORKING TEMPLATE
+│   ├── plant-monitor-rhea.yaml       # Needs API upload added
+│   ├── plant-monitor-ronak.yaml      # Needs API upload added
+│   ├── plant-monitor.yaml            # Original test config
+│   └── secrets.yaml                  # Not used (WiFi via captive portal)
 ```
 
 ---
 
-## Next Steps (In Order)
+## Database Schema
 
-### 1. Compile & Flash Firmware
+```sql
+-- Sensor readings (time-series data)
+moisture_sensors:
+  id, device_id, plant_number, plant_name, user_name,
+  location, moisture_percent, timestamp
+
+-- Device registry
+devices:
+  id, device_id, friendly_name, owner_name, last_seen, is_active
+
+-- Persistent plant settings (survives new readings)
+plant_configs:
+  id, device_id, plant_number, plant_name, location
+```
+
+---
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/` | Serves dashboard.html |
+| GET | `/health` | Health check |
+| POST | `/reading` | Receive sensor data from device |
+| GET | `/devices` | List all devices + latest readings |
+| GET | `/device/{id}` | Get specific device status |
+| PUT | `/device/{id}/plant/{num}` | Update plant name/location |
+| GET | `/device/{id}/plant/{num}/history` | Historical readings |
+
+---
+
+## Deployment
+
+### Docker (Portainer)
+```yaml
+# docker-compose.yml
+services:
+  plants-api:
+    image: ghcr.io/aptiger2024/plants-monitor:latest
+    ports:
+      - "7000:8000"
+    volumes:
+      - plants-data:/app/data
+```
+
+### Redeploying
+1. Push changes to GitHub main branch
+2. GitHub Action builds new image (~2-3 min)
+3. In Portainer: Pull and redeploy
+4. Done! No more deleting stacks/images.
+
+### ESPHome Compilation
 ```powershell
 cd D:\nextcloud\projects\plants\esphome-config
-python -m esphome compile plant-monitor.yaml
+python -m esphome compile plant-monitor-laurie.yaml
+# Output: .esphome/build/plant-monitor-laurie/.pioenvs/.../firmware.factory.bin
 ```
 
-If compilation succeeds:
-- Download the `.bin` file
-- Use https://web.esphome.io/ to flash to ESP-32
-- Watch logs to confirm WiFi connection
-
-### 2. Test Dual Sensors
-- Connect two moisture sensors (or potentiometers) to GPIO34 & GPIO35
-- Power on the device
-- OLED should display both plant moisture levels
-- Watch Home Assistant logs or web serial output
-
-### 3. Build Backend API
-- Create FastAPI endpoint to receive sensor readings
-- Two plants per device = one POST request with both moisture values
-- Store in SQLite database
-
-### 4. Connect Dashboard to API
-- Replace mock data in `dashboard.html` with real API calls
-- Update every 5-10 minutes
-
-### 5. Set Up Telegram Alerts
-- Create N8N workflow
-- Trigger when moisture < critical threshold
-- Send message to user
-
-### 6. Assemble All 5 Devices
-- Repeat hardware assembly
-- Flash firmware to each board
-- Test each device
-
----
-
-## Useful Commands
-
-### ESPHome
-```powershell
-# Start dashboard
-python -m esphome dashboard .
-
-# Compile only
-python -m esphome compile plant-monitor.yaml
-
-# Compile and upload via USB
-python -m esphome run plant-monitor.yaml
-
-# View logs
-python -m esphome logs plant-monitor.yaml
-
-# Update ESPHome
-pip install --upgrade esphome
-```
-
-### Dashboard Access
-- **URL:** `http://localhost:6052`
-- **Users:** Sarah, Tom, Alex, Jordan (no password)
-- **Plants:** 2 per user (mock data currently)
+### Flashing
+Use https://web.esphome.io/ - erases and flashes in one step.
 
 ---
 
 ## Known Issues & Solutions
 
-### ESPHome Compilation Error (FileNotFoundError)
-- **Status:** Encountered on first wizard attempt
-- **Solution:** Use command line compile instead: `python -m esphome compile plant-monitor.yaml`
-- **Alternative:** If still failing, might need platformio fix
+### Plant name reverts to "Plant 1"
+- **Fixed:** Plant names now stored in `PlantConfig` table, separate from readings
+- Names persist even when new sensor data arrives
 
-### USB Connection Issues
-- **Make sure:** Using a data cable (not just charging)
-- **Check:** Device Manager for COM port
-- **Install drivers:** CP210x or CH340 (board-dependent)
+### Docker cache not updating
+- **Fixed:** Now using GitHub Actions + ghcr.io registry
+- Just "Pull and redeploy" in Portainer
 
----
+### WiFi tries "SetupMode" on boot
+- **Fixed:** Removed hardcoded WiFi from secrets.yaml
+- Device goes straight to AP mode if no saved credentials
 
-## Cheeky Plant Messages (Already in Dashboard)
-
-**Happy (60-100%):**
-- "Living my best life! 🌿"
-- "Absolutely thriving, mate!"
-- "I'm so moist right now 😎"
-
-**Warning (30-60%):**
-- "Could use a sip, ngl"
-- "Getting a bit parched here..."
-- "Hint hint, nudge nudge 💧"
-
-**Critical (<30%):**
-- "WATER ME YOU MONSTER 😭"
-- "I'm literally desiccating rn"
-- "THIRSTY THIRSTY THIRSTY"
+### Intro button doesn't work
+- **Fixed:** Button now calls `openWelcomeModal()` instead of `playWelcomeAnimation()`
 
 ---
 
-## Project Goals (Summary)
+## Next Steps
 
-1. ✅ Design cute, simple web dashboard
-2. ✅ Write dual-sensor firmware
-3. ✅ Flash firmware to ESP-32 (boots successfully, connects to WiFi)
-4. ✅ Build backend API (FastAPI with SQLite, running on srv-media-2:7000)
-5. ✅ Connect dashboard to real API (updated to use https://plants.suplexcentral.com/api)
-6. ⏳ Set up Telegram alerts (N8N integration - next step)
-7. ⏳ Build 3-5 physical devices (waiting on sensors, then can build with full instructions)
-8. ⏳ Gift to friends! (comprehensive setup guides ready)
+### Immediate (When Ready to Build)
+1. Finalize any remaining firmware tweaks on Laurie's device
+2. Copy Laurie's config → Rhea and Ronak (just change names)
+3. Compile all three firmwares
+4. Flash each ESP-32
+5. Solder sensors to GPIO34/GPIO35
+6. Assemble in enclosures
+7. Test each device end-to-end
 
----
-
-## Notes for Next Session
-
-**Hardware Status:**
-- You have **2 ESP-32 boards** already ✅
-- Charger board: micro USB version arrived (ordering USB-C alternative)
-- **Waiting on:** capacitive soil moisture sensors (6-10 for 3-5 devices)
-
-**Software Status:**
-- Backend API: **Running on srv-media-2:7000** ✅
-- Dashboard: **Ready at plants.suplexcentral.com** ✅
-- Database: **Persistent SQLite volume** ✅
-- Device registration: **Automatic on first POST** ✅
-- Type annotations: **Fixed** ✅
-
-**WiFi Provisioning (NEW - Session 5):**
-- Per-device firmware configs created: Laurie, Rhea, Ronak ✅
-- Captive portal for user WiFi setup ✅
-- Credentials persist to flash (survive power cycles) ✅
-- Setup guide ready: SETUP_GUIDE.md ✅
-
-**How WiFi Provisioning Works:**
-1. Device boots and tries saved WiFi credentials
-2. If no saved WiFi (or connection fails), creates hotspot "Plant-Monitor [Name]"
-3. User connects phone to hotspot (password: flowers123)
-4. User visits http://192.168.4.1 and enters their home WiFi credentials
-5. Device saves credentials to flash and connects to home WiFi
-6. On future boots, device automatically reconnects (credentials persisted!)
-
-**Documentation Ready:**
-- SETUP_GUIDE.md - **NEW** User-friendly setup for gift recipients
-- DEVICE_SETUP_GUIDE.md - For gift recipients
-- BUILDER_DEVICE_CONFIG_GUIDE.md - For building devices
-- QUICK_START_YOUR_NEXT_DEVICE.md - Checklist template
-- DEVICE_REGISTRATION_EXPLAINED.md - How it works
-- NEXT_STEPS_FOR_YOU.md - Your action items
-- See DOCUMENTATION_INDEX.md for full list
-
-**When Sensors Arrive:**
-1. ~~Create per-device firmware configs~~ ✅ DONE
-2. Solder sensors to GPIO34/GPIO35
-3. Flash firmware to each ESP-32
-4. Test with real data
-5. Gift devices with SETUP_GUIDE.md!
+### Future Enhancements
+- [ ] N8N Telegram alerts when moisture critical
+- [ ] OLED display showing moisture levels
+- [ ] Captive portal styling (plant-themed)
+- [ ] Historical graphs on dashboard
+- [ ] Battery level monitoring
+- [ ] Deep sleep for battery life
 
 ---
 
-**Last Updated:** 2025-12-09 (Session 5)
-**Status:**
-- ✅ Production API running and tested
-- ✅ Dashboard fully configured
-- ✅ Device registration system ready
-- ✅ Complete documentation created
-- ✅ WiFi provisioning with persistent storage
-- ✅ Per-device firmware (Laurie, Rhea, Ronak) compiled
-- ⏳ Waiting on sensors for first real device build
-- 🎯 Next: Flash firmware, solder sensors when they arrive, gift devices!
+## Session History
+
+### Session 6 (2025-12-09) - Current
+- Fixed plant name persistence (new `PlantConfig` table)
+- Fixed intro button not opening modal
+- Simplified intro (removed useless name input)
+- Plant selector now shows actual plant names
+- Settings save to API and persist
+- Confirmed end-to-end flow working with Laurie's device
+
+### Session 5 (2025-12-09)
+- Set up GitHub Actions CI/CD pipeline
+- Fixed docker-compose to use ghcr.io registry
+- Dashboard now fetches real device data from API
+- Removed hardcoded mock users
+- Fixed WiFi provisioning (removed SetupMode placeholder)
+- Added HTTP POST to firmware (uploads every 5 min)
+- Laurie's device successfully registered and sending data
+
+### Session 4 (2025-11-28)
+- Fixed FastAPI type annotations
+- Created comprehensive documentation
+- Device registration system ready
+
+### Sessions 1-3
+- Initial hardware selection
+- Dashboard design with animations
+- ESPHome setup and first successful flash
+- Backend API creation
+
+---
+
+**Last Updated:** 2025-12-09 (Session 6)
+
+**Current State:**
+- ✅ Laurie's device: WORKING (flashed, connected, sending data)
+- ✅ Dashboard: WORKING (real data, settings persist)
+- ✅ API: WORKING (all endpoints functional)
+- ✅ CI/CD: WORKING (push to deploy)
+- ⏳ Rhea/Ronak firmware: Template ready, just needs name changes
+- ⏳ Physical assembly: Hardware ready, waiting to build
+- ⏳ N8N notifications: Not started
