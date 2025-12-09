@@ -68,6 +68,23 @@ class DeviceInfo(Base):
     is_active = Column(Integer, default=1)  # 1 = active, 0 = inactive
 
 
+class PlantConfig(Base):
+    """Persistent plant configuration (names, locations, thresholds)"""
+    __tablename__ = "plant_configs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    device_id = Column(String, index=True)
+    plant_number = Column(Integer)  # 1 or 2
+    plant_name = Column(String, nullable=True)
+    location = Column(String, nullable=True)
+    # Future: thresholds, plant type, etc.
+
+    __table_args__ = (
+        # Unique constraint on device_id + plant_number
+        {'sqlite_autoincrement': True},
+    )
+
+
 # Create all tables
 Base.metadata.create_all(bind=engine)
 
@@ -392,28 +409,29 @@ async def update_plant_settings(
 ):
     """
     Update plant name and location for a specific plant on a device.
-    This updates the most recent reading's metadata.
+    Stores in persistent PlantConfig table (survives new readings).
     """
     if plant_number not in [1, 2]:
         raise HTTPException(status_code=400, detail="plant_number must be 1 or 2")
 
-    # Get the most recent reading for this plant
-    reading = db.query(MoistureSensor).filter(
-        MoistureSensor.device_id == device_id,
-        MoistureSensor.plant_number == plant_number
-    ).order_by(MoistureSensor.timestamp.desc()).first()
+    # Get or create plant config
+    config = db.query(PlantConfig).filter(
+        PlantConfig.device_id == device_id,
+        PlantConfig.plant_number == plant_number
+    ).first()
 
-    if not reading:
-        raise HTTPException(status_code=404, detail="No readings found for this plant")
+    if not config:
+        config = PlantConfig(
+            device_id=device_id,
+            plant_number=plant_number
+        )
+        db.add(config)
 
-    # Update the reading's metadata
+    # Update config
     if request.plant_name is not None:
-        reading.plant_name = request.plant_name
+        config.plant_name = request.plant_name
     if request.location is not None:
-        reading.location = request.location
-
-    # Also update all future readings by updating the device's default plant names
-    # For now, we'll just update this reading - future readings will pick up names from device POSTs
+        config.location = request.location
 
     db.commit()
 
@@ -421,8 +439,8 @@ async def update_plant_settings(
         "status": "updated",
         "device_id": device_id,
         "plant_number": plant_number,
-        "plant_name": reading.plant_name,
-        "location": reading.location
+        "plant_name": config.plant_name,
+        "location": config.location
     }
 
 
@@ -433,15 +451,27 @@ async def list_devices(db: Session = Depends(get_db)):
 
     result = []
     for device in devices:
-        plant_1 = db.query(MoistureSensor).filter(
+        # Get latest readings
+        plant_1_reading = db.query(MoistureSensor).filter(
             MoistureSensor.device_id == device.device_id,
             MoistureSensor.plant_number == 1
         ).order_by(MoistureSensor.timestamp.desc()).first()
 
-        plant_2 = db.query(MoistureSensor).filter(
+        plant_2_reading = db.query(MoistureSensor).filter(
             MoistureSensor.device_id == device.device_id,
             MoistureSensor.plant_number == 2
         ).order_by(MoistureSensor.timestamp.desc()).first()
+
+        # Get persistent plant configs (names, locations)
+        plant_1_config = db.query(PlantConfig).filter(
+            PlantConfig.device_id == device.device_id,
+            PlantConfig.plant_number == 1
+        ).first()
+
+        plant_2_config = db.query(PlantConfig).filter(
+            PlantConfig.device_id == device.device_id,
+            PlantConfig.plant_number == 2
+        ).first()
 
         result.append({
             "device_id": device.device_id,
@@ -450,15 +480,17 @@ async def list_devices(db: Session = Depends(get_db)):
             "is_active": device.is_active == 1,
             "last_seen": device.last_seen.isoformat(),
             "plant_1": {
-                "moisture": plant_1.moisture_percent if plant_1 else None,
-                "status": get_moisture_status(plant_1.moisture_percent) if plant_1 else None,
-                "name": plant_1.plant_name if plant_1 else None
-            } if plant_1 else None,
+                "moisture": plant_1_reading.moisture_percent if plant_1_reading else None,
+                "status": get_moisture_status(plant_1_reading.moisture_percent) if plant_1_reading else None,
+                "name": plant_1_config.plant_name if plant_1_config else None,
+                "location": plant_1_config.location if plant_1_config else None,
+            } if plant_1_reading else None,
             "plant_2": {
-                "moisture": plant_2.moisture_percent if plant_2 else None,
-                "status": get_moisture_status(plant_2.moisture_percent) if plant_2 else None,
-                "name": plant_2.plant_name if plant_2 else None
-            } if plant_2 else None,
+                "moisture": plant_2_reading.moisture_percent if plant_2_reading else None,
+                "status": get_moisture_status(plant_2_reading.moisture_percent) if plant_2_reading else None,
+                "name": plant_2_config.plant_name if plant_2_config else None,
+                "location": plant_2_config.location if plant_2_config else None,
+            } if plant_2_reading else None,
         })
 
     return {"devices": result}

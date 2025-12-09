@@ -625,14 +625,14 @@
 
             <div class="alarm-text" id="alarmText" style="display: none;">🚨 NEEDS WATER! 🚨</div>
 
-            <div id="nameInputSection" style="display: none; margin: 20px 0;">
-                <p style="margin-bottom: 10px; color: #666;">What's your name?</p>
-                <input type="text" id="userNameInput" class="welcome-input" placeholder="Enter your name" maxlength="20">
-            </div>
+            <p id="welcomeExplainer" style="display: none; margin: 20px 0; color: #666; font-size: 14px;">
+                Your plant monitor will alert you when moisture gets low.<br>
+                Check back anytime to see how your plants are doing!
+            </p>
 
             <div class="welcome-buttons" id="welcomeButtons">
                 <button class="btn-primary" onclick="progressWelcome()">Next →</button>
-                <button class="btn-secondary" onclick="skipWelcome()">Skip</button>
+                <button class="btn-secondary" onclick="completeWelcome()">Skip</button>
             </div>
 
             <div class="welcome-skip" id="continueSection" style="display: none;">
@@ -1091,20 +1091,12 @@
             if (welcomeStage === 0) {
                 welcomeStage = 1;
                 document.getElementById('welcomeButtons').style.display = 'none';
-                document.getElementById('nameInputSection').style.display = 'block';
+                document.getElementById('welcomeExplainer').style.display = 'block';
                 document.getElementById('continueSection').style.display = 'block';
             }
         }
 
-        function skipWelcome() {
-            completeWelcome();
-        }
-
         function completeWelcome() {
-            const userName = document.getElementById('userNameInput').value.trim();
-            if (userName) {
-                setCookie('userName', userName);
-            }
             document.getElementById('welcomeModal').classList.remove('show');
             welcomeStage = 0;
         }
