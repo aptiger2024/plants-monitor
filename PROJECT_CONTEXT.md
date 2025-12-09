@@ -71,6 +71,17 @@ Building custom **plant moisture monitors** as gifts for friends. Each device mo
   - DOCUMENTATION_INDEX.md - Master navigation index
   - NEXT_STEPS_FOR_YOU.md - Immediate action items
 
+### ✅ WiFi Provisioning System (Session 5)
+- **Per-device firmware configs created** ✅
+  - `plant-monitor-laurie.yaml`
+  - `plant-monitor-rhea.yaml`
+  - `plant-monitor-ronak.yaml`
+- **Captive Portal** - Devices create WiFi hotspot (e.g., "Plant-Monitor Laurie") for setup
+- **Web Server** - Local config page at http://192.168.4.1 (admin/admin)
+- **Persistent WiFi Storage** - Credentials saved to flash, survive power cycles
+- **Setup Guide Created** - SETUP_GUIDE.md for gift recipients
+- **Firmware compiled** for all three devices ✅
+
 ### 🔄 In Progress
 - Waiting for capacitive soil moisture sensors to arrive
 - Charger board arrived (micro USB) - found USB-C alternative: https://www.amazon.ca/Charging-Lithium-Battery-Protection-Discharge/dp/B0D7Z92K51/ ✅
@@ -267,7 +278,22 @@ pip install --upgrade esphome
 - Device registration: **Automatic on first POST** ✅
 - Type annotations: **Fixed** ✅
 
+**WiFi Provisioning (NEW - Session 5):**
+- Per-device firmware configs created: Laurie, Rhea, Ronak ✅
+- Captive portal for user WiFi setup ✅
+- Credentials persist to flash (survive power cycles) ✅
+- Setup guide ready: SETUP_GUIDE.md ✅
+
+**How WiFi Provisioning Works:**
+1. Device boots and tries saved WiFi credentials
+2. If no saved WiFi (or connection fails), creates hotspot "Plant-Monitor [Name]"
+3. User connects phone to hotspot (password: flowers123)
+4. User visits http://192.168.4.1 and enters their home WiFi credentials
+5. Device saves credentials to flash and connects to home WiFi
+6. On future boots, device automatically reconnects (credentials persisted!)
+
 **Documentation Ready:**
+- SETUP_GUIDE.md - **NEW** User-friendly setup for gift recipients
 - DEVICE_SETUP_GUIDE.md - For gift recipients
 - BUILDER_DEVICE_CONFIG_GUIDE.md - For building devices
 - QUICK_START_YOUR_NEXT_DEVICE.md - Checklist template
@@ -276,19 +302,21 @@ pip install --upgrade esphome
 - See DOCUMENTATION_INDEX.md for full list
 
 **When Sensors Arrive:**
-1. Create per-device firmware configs (plant-monitor-1.yaml, plant-monitor-2.yaml, etc.)
+1. ~~Create per-device firmware configs~~ ✅ DONE
 2. Solder sensors to GPIO34/GPIO35
-3. Test with real data
-4. Prepare recipient setup cards
-5. Gift devices!
+3. Flash firmware to each ESP-32
+4. Test with real data
+5. Gift devices with SETUP_GUIDE.md!
 
 ---
 
-**Last Updated:** 2025-11-28 (Session 4)
+**Last Updated:** 2025-12-09 (Session 5)
 **Status:**
 - ✅ Production API running and tested
 - ✅ Dashboard fully configured
 - ✅ Device registration system ready
 - ✅ Complete documentation created
+- ✅ WiFi provisioning with persistent storage
+- ✅ Per-device firmware (Laurie, Rhea, Ronak) compiled
 - ⏳ Waiting on sensors for first real device build
-- 🎯 Next: Build device #1 when sensors arrive, then replicate for devices #2-5
+- 🎯 Next: Flash firmware, solder sensors when they arrive, gift devices!

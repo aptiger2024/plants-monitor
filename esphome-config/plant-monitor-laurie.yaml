@@ -12,43 +12,60 @@ esp32:
 logger:
   level: INFO
 
-# Disable API for now
-# api:
-
 ota:
   - platform: esphome
     password: "27b87c2c9de41b858c0ad84ad13984f5"
 
 wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  fast_connect: true
+  # No hardcoded network - device starts in AP mode for user to configure
+  # Once configured via captive portal, credentials persist in flash
   ap:
     ssid: "Plant-Monitor Laurie"
     password: "flowers123"
-  # WiFi credentials are automatically saved to flash after successful connection
-  # and will be restored after power cycle or reset
+  # Immediately start AP mode (don't wait for failed connection attempts)
+  reboot_timeout: 0s
 
 captive_portal:
 
-# Web server for setup interface
+# Web server for setup interface (no auth - only accessible via device hotspot)
 web_server:
   port: 80
-  auth:
-    username: admin
-    password: admin
-  css_url: ""
-  js_url: ""
+
+# Global variables to store moisture percentages
+globals:
+  - id: moisture_1_pct
+    type: float
+    restore_value: no
+    initial_value: '0.0'
+  - id: moisture_2_pct
+    type: float
+    restore_value: no
+    initial_value: '0.0'
 
 # Analog sensors for moisture
 sensor:
   # Moisture Sensor 1 (GPIO34)
+  # Capacitive sensors: ~3.0V in air (dry), ~1.5V in water (wet)
   - platform: adc
     pin: GPIO34
     name: "Plant 1 Moisture"
     id: moisture_1
     attenuation: auto
     update_interval: 60s
+    filters:
+      # Convert voltage to percentage (calibration values - adjust after testing)
+      # 3.0V = 0% (dry), 1.5V = 100% (wet)
+      - calibrate_linear:
+          - 3.0 -> 0.0
+          - 1.5 -> 100.0
+      - clamp:
+          min_value: 0
+          max_value: 100
+    on_value:
+      then:
+        - globals.set:
+            id: moisture_1_pct
+            value: !lambda 'return x;'
 
   # Moisture Sensor 2 (GPIO35)
   - platform: adc
@@ -57,6 +74,18 @@ sensor:
     id: moisture_2
     attenuation: auto
     update_interval: 60s
+    filters:
+      - calibrate_linear:
+          - 3.0 -> 0.0
+          - 1.5 -> 100.0
+      - clamp:
+          min_value: 0
+          max_value: 100
+    on_value:
+      then:
+        - globals.set:
+            id: moisture_2_pct
+            value: !lambda 'return x;'
 
   # WiFi signal
   - platform: wifi_signal
@@ -65,3 +94,27 @@ sensor:
 
 # HTTP client for API requests
 http_request:
+  timeout: 10s
+
+# Send data to API every 5 minutes
+interval:
+  - interval: 5min
+    then:
+      - if:
+          condition:
+            wifi.connected:
+          then:
+            - http_request.post:
+                url: "https://plants.suplexcentral.com/reading"
+                json: |-
+                  root["device_id"] = "plant-monitor-laurie";
+                  root["plant_1_moisture"] = id(moisture_1_pct);
+                  root["plant_2_moisture"] = id(moisture_2_pct);
+                  root["user_name"] = "Laurie";
+                on_response:
+                  then:
+                    - logger.log:
+                        format: "API Response: %d"
+                        args: ['response->status_code']
+          else:
+            - logger.log: "WiFi not connected, skipping API upload"
