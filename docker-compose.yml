@@ -2,9 +2,7 @@ version: '3.8'
 
 services:
   plants-api:
-    build:
-      context: https://github.com/aptiger2024/plants-monitor.git
-      dockerfile: Dockerfile.api
+    image: ghcr.io/aptiger2024/plants-monitor:latest
     container_name: plants-api
     restart: unless-stopped
     ports:
